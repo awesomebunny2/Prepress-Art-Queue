@@ -15,7 +15,7 @@ var moveEvent;
 // var eventsOff;
 // var eventsOn;
 var sortEvent;
-var sortColumn = "Date";
+var sortColumn = "Tags";
 //#endregion ----------------------------------------------------------------------------------------------
 
 //#region CHECKBOX SETUP ________________________________________________________________________________________
@@ -59,7 +59,7 @@ Office.onReady((info) => {
         
         moveEvent = context.workbook.tables.onChanged.add(onTableChanged);
 
-        // sortEvent = context.workbook.tables.onChanged.add(sortDate);
+        sortEvent = context.workbook.tables.onChanged.add(sortDate);
 
         return context.sync().then(function() { //Commits changes to document and then returns the console.log
           console.log("Event handlers have been successfully registered");
@@ -140,7 +140,7 @@ async function onTableChanged(eventArgs: Excel.TableChangedEventArgs) { //This f
         var mattSheet = context.workbook.worksheets.getItem("Matt");
         var mattTable = mattSheet.tables.getItem("MattProjects");
         //#endregion --------------------------------------------------------------------------
-        // //#region ALAINA VARIABLES ------------------------------------------------------
+        //#region ALAINA VARIABLES ------------------------------------------------------
         var alainaSheet = context.workbook.worksheets.getItem("Alaina");
         var alainaTable = alainaSheet.tables.getItem("AlainaProjects");
         //#endregion --------------------------------------------------------------------------
@@ -226,7 +226,7 @@ async function onTableChanged(eventArgs: Excel.TableChangedEventArgs) { //This f
         //#endregion ---------------------------------------------------------------------------
       //#endregion ------------------------------------------------------------------------------------------------
 
-      //#region MOVE CONDITIONS -----------------------------------------------------------------------------------
+    //#region MOVE CONDITIONS -----------------------------------------------------------------------------------
         
       await context.sync() //Commits data to variables above
 
@@ -372,15 +372,17 @@ async function onTableChanged(eventArgs: Excel.TableChangedEventArgs) { //This f
 
 //#region SORT BY DATE ------------------------------------------------------------------------------------------
 async function sortDate(eventArgs: Excel.TableChangedEventArgs) { //This function will be using event arguments to collect data from the workbook
+  // console.log("SORT FUNCTION FIRED!");
+  console.log(eventArgs);
 
   var theChange = eventArgs.changeType; //Kind of change that was made
   var theDetails = eventArgs.details;
 
   // console.log("args ");
-  // console.log(eventArgs);
 
-  if (theChange == "RangeEdited" && (theDetails == undefined || theDetails.valueTypeAfter == "Double")) { //&& theDetails == undefined) {
-    console.log("The sorting event has been initiated!!");
+  
+  if (theChange == "RangeEdited" && (theDetails == undefined || theDetails.valueTypeAfter == "String")) { //&& theDetails == undefined) {
+    console.log("The sorting event has been initiated!!"); //Prevents an event from being triggered when a new row is inserted into the other sheet, thus causing duplicate runs
 
     //#region SORTING VARIABLES ---------------------------------------------------------------------------------
     Excel.run(async context => {
@@ -388,23 +390,38 @@ async function sortDate(eventArgs: Excel.TableChangedEventArgs) { //This functio
       var tableRange = changedTable.getRange(); //Gets the range of the changed table
       var sortHeader = tableRange.find(sortColumn, {}); //Gets the range of the entire sortColumn (the "Date" column) from the changed table
       sortHeader.load("columnIndex");
+      var sortTag = ["Urgent", "Semi-Urgent", "Not Urgent", "Eventual", "Downtime"];
       //#endregion --------------------------------------------------------------------------------------------------
 
       //#region SORTING CONDITIONS --------------------------------------------------------------------------------
       return context.sync().then(function() {
         // console.log("Sync completed...Ready to sort")
         // console.log(sortHeader.columnIndex);
-        tableRange.sort.apply(
-          [
-            { //list of conditions to sort on
-              key: sortHeader.columnIndex, //sorts based on data in Date column
-              sortOn: Excel.SortOn.value //sorts based on cell vlaues
-            }
-          ],
-          false, //will not impact string ordering
-          true, //table has headers
-          Excel.SortOrientation.rows //sorts the rows based on previous conditions
-        );
+        // tableRange.sort.apply(
+        //   [
+        //     { //list of conditions to sort on
+        //       // key: sortHeader.columnIndex, //sorts based on data in Date column
+        //       // sortOn: Excel.SortOn.value, //sorts based on cell vlaues
+        //       // ascending: true
+        //       key: sortHeader.columnIndex, //sorts based on data in Date column
+        //       sortOn: Excel.SortOn.value, //sorts based on cell vlaues
+        //       ascending: true
+        //     }
+        //   ],
+        //   false, //will not impact string ordering
+        //   true, //table has headers
+        //   Excel.SortOrientation.rows //sorts the rows based on previous conditions
+        // );
+
+        // Queue a command to apply a filter on the Category column
+        // var filter = changedTable.columns.getItem("Tags").filter;
+        // filter.apply({
+        //     filterOn: Excel.FilterOn.values,
+        //     values: ["Urgent", "Semi-Urgent", "Not Urgent", "Eventual", "Downtime"]
+        // });
+
+
+
         console.log("Sorting is completed.")
       }); 
       //#endregion --------------------------------------------------------------------------------------------------
