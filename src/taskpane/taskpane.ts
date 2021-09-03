@@ -12,8 +12,8 @@ import "../../assets/icon-80.png";
 //#region GLOBAL VARIABLES --------------------------------------------------------------------------------------
 var artistColumn = "Q";
 var moveEvent;
-var eventsOff;
-var eventsOn;
+// var eventsOff;
+// var eventsOn;
 var sortEvent;
 var sortColumn = "Date";
 //#endregion ----------------------------------------------------------------------------------------------
@@ -57,7 +57,7 @@ Office.onReady((info) => {
 
         // console.log("Events are turned on!");
         
-        // moveEvent = context.workbook.tables.onChanged.add(onTableChanged);
+        moveEvent = context.workbook.tables.onChanged.add(onTableChanged);
 
         // sortEvent = context.workbook.tables.onChanged.add(sortDate);
 
@@ -72,29 +72,29 @@ Office.onReady((info) => {
 //#region TOGGLE EVENTS ----------------------------------------------------------------------------------------
 
   //#region EVENTS OFF -----------------------------------------------------------------------------------------
-  async function turnEventsOff() {
-    Excel.run(function (context) {
-      context.runtime.load("enableEvents");
-      return context.sync()
-          .then(function () {
-            eventsOff = !context.runtime.enableEvents;
-            return;
-          });
-    });
-  };
+  // async function turnEventsOff() {
+  //   Excel.run(function (context) {
+  //     context.runtime.load("enableEvents");
+  //     return context.sync()
+  //         .then(function () {
+  //           eventsOff = !context.runtime.enableEvents;
+  //           return;
+  //         });
+  //   });
+  // };
   //#endregion ----------------------------------------------------------------------------------------------
 
   //#region EVENTS ON ------------------------------------------------------------------------------------------
-  async function turnEventsOn() {
-    Excel.run(function turnEventsOn(context) {
-      context.runtime.load("enableEvents");
-      return context.sync()
-          .then(function () {
-            eventsOn = context.runtime.enableEvents;
-            return;
-          });
-    });
-  };
+  // async function turnEventsOn() {
+  //   Excel.run(function turnEventsOn(context) {
+  //     context.runtime.load("enableEvents");
+  //     return context.sync()
+  //         .then(function () {
+  //           eventsOn = context.runtime.enableEvents;
+  //           return;
+  //         });
+  //   });
+  // };
   //#endregion ------------------------------------------------------------------------------------------------
 
 //#endregion ---------------------------------------------------------------------------------------------------
@@ -110,13 +110,16 @@ async function onTableChanged(eventArgs: Excel.TableChangedEventArgs) { //This f
     //   return; //Prevents an event from being triggered when a new row is inserted into the other sheet, thus causing duplicate runs
     // }
     if (theChange == "RangeEdited" && eventArgs.details !== undefined) {
-    console.log("The move data event has been initiated!!");
+      
+      console.log("The move data event has been initiated!!");
+      
       if (eventArgs.details.valueAfter == eventArgs.details.valueBefore) {
         console.log("No values have changed. Exiting move data event...")
         return;
       }
 
       //#region EVENT VARIABLES -----------------------------------------------------------------------------------
+      
       var details = eventArgs.details; //Loads the values before and after the event
       var address = eventArgs.address; //Loads the cell's address where the event took place
       var changedTable = context.workbook.tables.getItem(eventArgs.tableId).load("name"); //Returns tableId of the table where the event occured
@@ -125,6 +128,7 @@ async function onTableChanged(eventArgs: Excel.TableChangedEventArgs) { //This f
       var changedColumn = regexStr[0]; //The first instance of the separated address array, being the column letter(s)
       var changedRow = Number(regexStr[1]) - 2; //The second instance of the separated address array, being the row, converted into a number and subtracted by 2
       var myRow = changedTable.rows.getItemAt(changedRow).load("values"); //loads the values of the changed row in the table where the event was fired
+      
       //#endregion ------------------------------------------------------------------------------------------------
 
       //#region SPECIFIC TABLE VARIABLES --------------------------------------------------------------------------
@@ -136,7 +140,7 @@ async function onTableChanged(eventArgs: Excel.TableChangedEventArgs) { //This f
         var mattSheet = context.workbook.worksheets.getItem("Matt");
         var mattTable = mattSheet.tables.getItem("MattProjects");
         //#endregion --------------------------------------------------------------------------
-        //#region ALAINA VARIABLES ------------------------------------------------------
+        // //#region ALAINA VARIABLES ------------------------------------------------------
         var alainaSheet = context.workbook.worksheets.getItem("Alaina");
         var alainaTable = alainaSheet.tables.getItem("AlainaProjects");
         //#endregion --------------------------------------------------------------------------
@@ -223,17 +227,17 @@ async function onTableChanged(eventArgs: Excel.TableChangedEventArgs) { //This f
       //#endregion ------------------------------------------------------------------------------------------------
 
       //#region MOVE CONDITIONS -----------------------------------------------------------------------------------
-
+        
       await context.sync() //Commits data to variables above
 
       .then(function () {
-
-        console.log(`
-          changedColumn: ${changedColumn}
-          artistColumn: ${artistColumn}
-          details.valueAfter: ${details.valueAfter}
-          myRow: ${myRow.values}
-        `);
+        console.log("Synced!");
+        // console.log(`
+        //   changedColumn: ${changedColumn}
+        //   artistColumn: ${artistColumn}
+        //   details.valueAfter: ${details.valueAfter}
+        //   myRow: ${myRow.values}
+        // `);
 
 
         if (changedColumn == artistColumn) {
@@ -419,14 +423,3 @@ async function tryCatch(callback) {
   }
 }
 //#endregion ---------------------------------------------------------------------------------------------------
-
-
-
-
-/**
- * NEW FANCY AWESEME FUNCTION 
- */
-
-function wowCoolMan() {
-
-}
