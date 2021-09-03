@@ -24,6 +24,7 @@ $("#set-behavior").on("change", function() {
 
   // Is this set to checked?
   var checked = $(this).prop("checked");
+  //commeny
 
   if (checked == true) { // Set the startup behavior!
     Office.addin.setStartupBehavior(Office.StartupBehavior.load); //when document opens, references startup behavioir in manifest, which automatically opens the taskpane
