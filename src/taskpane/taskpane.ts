@@ -59,7 +59,7 @@ Office.onReady((info) => {
         
         moveEvent = context.workbook.tables.onChanged.add(onTableChanged);
 
-        sortEvent = context.workbook.tables.onChanged.add(sortDate);
+        // sortEvent = context.workbook.tables.onChanged.add(sortDate);
 
         return context.sync().then(function() { //Commits changes to document and then returns the console.log
           console.log("Event handlers have been successfully registered");
@@ -390,28 +390,44 @@ async function sortDate(eventArgs: Excel.TableChangedEventArgs) { //This functio
       var tableRange = changedTable.getRange(); //Gets the range of the changed table
       var sortHeader = tableRange.find(sortColumn, {}); //Gets the range of the entire sortColumn (the "Date" column) from the changed table
       sortHeader.load("columnIndex");
-      var sortTag = ["Urgent", "Semi-Urgent", "Not Urgent", "Eventual", "Downtime"];
+      sortHeader.load("values")
+      // var sortTag = ["Urgent", "Semi-Urgent", "Not Urgent", "Eventual", "Downtime"];
+      const list = [
+        { Tag: 'Urgent'},
+        { Tag: 'Semi-Urgent'},
+        { Tag: 'Not Urgent'},
+        { Tag: 'Eventual'},
+        { Tag: 'Downtime'},
+      ]
       //#endregion --------------------------------------------------------------------------------------------------
 
       //#region SORTING CONDITIONS --------------------------------------------------------------------------------
       return context.sync().then(function() {
-        // console.log("Sync completed...Ready to sort")
-        // console.log(sortHeader.columnIndex);
-        // tableRange.sort.apply(
-        //   [
-        //     { //list of conditions to sort on
-        //       // key: sortHeader.columnIndex, //sorts based on data in Date column
-        //       // sortOn: Excel.SortOn.value, //sorts based on cell vlaues
-        //       // ascending: true
-        //       key: sortHeader.columnIndex, //sorts based on data in Date column
-        //       sortOn: Excel.SortOn.value, //sorts based on cell vlaues
-        //       ascending: true
-        //     }
-        //   ],
-        //   false, //will not impact string ordering
-        //   true, //table has headers
-        //   Excel.SortOrientation.rows //sorts the rows based on previous conditions
-        // );
+        console.log("Sync completed...Ready to sort")
+        console.log(sortHeader.columnIndex);
+        // console.log(list);
+
+        // if (sortHeader.columnIndex == 14) {
+        //   list.sort((a, b) => (a.Tag > b.Tag) ? 1 : -1)
+        // }
+
+        tableRange.sort.apply(
+          [
+            { //list of conditions to sort on
+              key: sortHeader.columnIndex, //sorts based on data in Date column
+              sortOn: Excel.SortOn.value, //sorts based on cell vlaues
+              ascending: true
+              // subField: Excel.subField, //sorts based on cell vlaues
+              // subField: String(sortTag)
+            }
+          ],
+          false, //will not impact string ordering
+          true, //table has headers
+          Excel.SortOrientation.rows //sorts the rows based on previous conditions
+        );
+        
+
+     
 
         // Queue a command to apply a filter on the Category column
         // var filter = changedTable.columns.getItem("Tags").filter;
