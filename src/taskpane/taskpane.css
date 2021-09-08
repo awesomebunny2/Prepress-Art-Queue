@@ -84,8 +84,23 @@ b {
     font-weight: bold;
 }
 
+#queue-btn {
+    padding-top: 10px;
+    /* border: none; */
+    border-bottom: 1px solid;
+    padding-bottom: 5px;
+    background: none;
+    color: rgb(121, 141, 255);
+    /* text-decoration: underline; */
+}
+
 #add-to-queue {
     display:none;
+}
+
+#check-container {
+    width:100%; /* Fill the container */
+    text-align:center; /* Keep things in the middle */
 }
 
 /* #info-icon{
@@ -93,6 +108,7 @@ b {
 } */
 
 .icon-hover {
+    display: inline;
     position: relative;
     width: 50%;
   }
