@@ -62,7 +62,7 @@ Office.onReady((info) => {
     if (info.host === Office.HostType.Excel) { //If application is Excel
       document.getElementById("sideload-msg").style.display = "none"; //Don't show side-loading message
       document.getElementById("app-body").style.display = "flex"; //Keep content in taskpane flexible to scaling, I think...
-      document.getElementById("Add to Queue").style.display = "none";
+      // document.getElementById("add-to-queue").style.display = "none"; //← Do this in tatskpane.css!
         
       Excel.run(async context => { //Do while Excel is running
         // turnEventsOn();
@@ -478,13 +478,27 @@ async function tryCatch(callback) {
 // var addToQueue = document.getElementById("Add to Queue");
 // var queueBtn = document.getElementById("queueBtn");
 // var backBtn = document.getElementById("backBtn");
+window.onload = function() {
+  document.getElementById("queueBtn").onclick = function addRequest() {
+    document.getElementById("home").style.display = "none";
+    document.getElementById("add-to-queue").style.display = "block";
+  };
+  
+  document.getElementById("backBtn").onclick = function backToHome() {
+    document.getElementById("add-to-queue").style.display = "none";
+    document.getElementById("home").style.display = "block";
+  };
+}
 
-document.getElementById("queueBtn").onclick = function addRequest() {
-  document.getElementById("Home").style.display = "none";
-  document.getElementById("Add to Queue").style.display = "flex";
-};
+// $(function() { // ← When document loads
+//   $("#queueBtn").on("click", function() {
+//     $("#home").hide();
+//     $("#add-to-queue").show();
+//   });
+  
+//   $("#backBtn").on("click", function() {
+//     $("#home").show();
+//     $("#add-to-queue").hide();
+//   });
+// });
 
-document.getElementById("backBtn").onclick = function backToHome() {
-  document.getElementById("Add to Queue").style.display = "none";
-  document.getElementById("Home").style.display = "flex";
-};
