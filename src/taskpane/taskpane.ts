@@ -10,6 +10,16 @@ import "../../assets/icon-32.png";
 import "../../assets/icon-80.png";
 //#endregion ----------------------------------------------------------------------------------------------------
 
+// var list = [
+//   { Tag: 'Eventual'},
+//   { Tag: 'Semi-Urgent'},
+//   { Tag: 'Urgent'},
+//   { Tag: 'Not Urgent'},
+//   { Tag: 'Downtime'}
+// ]
+
+// console.log(list.sort((a,b) => (a.Tag < b.Tag) ? 1 : -1))
+
 //#region GLOBAL VARIABLES --------------------------------------------------------------------------------------
 var artistColumn = "Q";
 var moveEvent;
@@ -52,6 +62,7 @@ Office.onReady((info) => {
     if (info.host === Office.HostType.Excel) { //If application is Excel
       document.getElementById("sideload-msg").style.display = "none"; //Don't show side-loading message
       document.getElementById("app-body").style.display = "flex"; //Keep content in taskpane flexible to scaling, I think...
+      document.getElementById("Add to Queue").style.display = "none";
         
       Excel.run(async context => { //Do while Excel is running
         // turnEventsOn();
@@ -60,7 +71,7 @@ Office.onReady((info) => {
         
         moveEvent = context.workbook.tables.onChanged.add(onTableChanged);
 
-        // sortEvent = context.workbook.tables.onChanged.add(sortDate);
+        sortEvent = context.workbook.tables.onChanged.add(sortDate);
 
         return context.sync().then(function() { //Commits changes to document and then returns the console.log
           console.log("Event handlers have been successfully registered");
@@ -408,24 +419,30 @@ async function sortDate(eventArgs: Excel.TableChangedEventArgs) { //This functio
         console.log(sortHeader.columnIndex);
         // console.log(list);
 
-        // if (sortHeader.columnIndex == 14) {
-        //   list.sort((a, b) => (a.Tag > b.Tag) ? 1 : -1)
-        // }
+        if (sortHeader.columnIndex == 14) {
+          list.sort((a, b) => (a.Tag < b.Tag) ? 1 : -1);
+          console.log(list);
+        }
 
-        tableRange.sort.apply(
-          [
-            { //list of conditions to sort on
-              key: sortHeader.columnIndex, //sorts based on data in Date column
-              sortOn: Excel.SortOn.value, //sorts based on cell vlaues
-              ascending: true
-              // subField: Excel.subField, //sorts based on cell vlaues
-              // subField: String(sortTag)
-            }
-          ],
-          false, //will not impact string ordering
-          true, //table has headers
-          Excel.SortOrientation.rows //sorts the rows based on previous conditions
-        );
+        // tableRange.sort.apply(
+        //   [
+        //     { //list of conditions to sort on
+        //       key: sortHeader.columnIndex, //sorts based on data in Date column
+        //       sortOn: Excel.SortOn.value, //sorts based on cell vlaues
+        //       ascending: true
+        //       // subField: Excel.subField, //sorts based on cell vlaues
+        //       // subField: String(sortTag)
+        //     }
+        //   ],
+        //   false, //will not impact string ordering
+        //   true, //table has headers
+        //   Excel.SortOrientation.rows //sorts the rows based on previous conditions
+        // );
+
+        // const myArray = [1, 2, 3, 4, 5, 6];
+        // let filteredArray = list.filter((x) => {
+        //   return x % 2 === 0;
+        // });
         
 
      
