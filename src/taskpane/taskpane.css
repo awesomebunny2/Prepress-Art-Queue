@@ -75,6 +75,10 @@
   cursor: pointer;
 }
 
+h1 {
+    text-align: center;
+}
+
 b {
     font-weight: bold;
 }

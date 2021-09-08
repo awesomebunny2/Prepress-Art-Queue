@@ -4,6 +4,7 @@
  */
 
 //#region IMAGE REFERENCES --------------------------------------------------------------------------------------
+import { ContextReplacementPlugin } from "webpack";
 import "../../assets/icon-16.png";
 import "../../assets/icon-32.png";
 import "../../assets/icon-80.png";
@@ -456,3 +457,17 @@ async function tryCatch(callback) {
   }
 }
 //#endregion ---------------------------------------------------------------------------------------------------
+// var home = document.getElementById("Home");
+// var addToQueue = document.getElementById("Add to Queue");
+// var queueBtn = document.getElementById("queueBtn");
+// var backBtn = document.getElementById("backBtn");
+
+document.getElementById("queueBtn").onclick = function addRequest() {
+  document.getElementById("Home").style.display = "none";
+  document.getElementById("Add to Queue").style.display = "flex";
+};
+
+document.getElementById("backBtn").onclick = function backToHome() {
+  document.getElementById("Add to Queue").style.display = "none";
+  document.getElementById("Home").style.display = "flex";
+};
