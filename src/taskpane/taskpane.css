@@ -129,7 +129,7 @@ b {
 
 #queue-btn {
     padding-top: 10px;
-    /* border: none; */
+    border: none;
     border-bottom: 1px solid;
     padding-bottom: 5px;
     background: none;
