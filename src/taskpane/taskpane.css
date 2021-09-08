@@ -129,7 +129,7 @@ b {
 
 #queue-btn {
     padding-top: 10px;
-    /* border: none; */
+    border: none;
     border-bottom: 1px solid;
     padding-bottom: 5px;
     background: none;
@@ -142,16 +142,22 @@ b {
 }
 
 #queue-btn:hover {
+    display:flex;
+    align-items: center;
+    justify-content: center;
+    cursor:pointer;
     font-size: 20px;
     transition: 0.15s;
     opacity: 1
 }
 
-#queue-btn:hover request-hover {
+/* #queue-btn:hover request-hover {
     display: block;
+} */
+
+#queue-btn:hover > i {
+    font-size:19pt;
 }
-
-
 
 #add-to-queue {
     display:none;
