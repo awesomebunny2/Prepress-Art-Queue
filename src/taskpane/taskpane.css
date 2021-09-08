@@ -97,7 +97,7 @@ b {
     width: auto;
     position: relative;
 
-    &::after {
+    /* &::after {
         content: "\f054";
         font-family: "Font Awesome 5 Pro";
         font-weight: 400;
@@ -121,11 +121,11 @@ b {
             opacity: 1;
             transition: all 0.5s;
 
-        }
+        } */
     }
 
 
-}
+/* } */
 
 #queue-btn {
     padding-top: 10px;
