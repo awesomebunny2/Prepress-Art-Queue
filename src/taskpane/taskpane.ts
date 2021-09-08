@@ -62,7 +62,6 @@ Office.onReady((info) => {
     if (info.host === Office.HostType.Excel) { //If application is Excel
       document.getElementById("sideload-msg").style.display = "none"; //Don't show side-loading message
       document.getElementById("app-body").style.display = "flex"; //Keep content in taskpane flexible to scaling, I think...
-      document.getElementById("Add to Queue").style.display = "none";
         
       Excel.run(async context => { //Do while Excel is running
         // turnEventsOn();
@@ -474,17 +473,31 @@ async function tryCatch(callback) {
   }
 }
 //#endregion ---------------------------------------------------------------------------------------------------
-// var home = document.getElementById("Home");
-// var addToQueue = document.getElementById("Add to Queue");
-// var queueBtn = document.getElementById("queueBtn");
-// var backBtn = document.getElementById("backBtn");
+// var home = document.getElementById("home");
+// var addToQueue = document.getElementById("add-to-queue");
+// var queueBtn = document.getElementById("queue-btn");
+// var backBtn = document.getElementById("back-btn");
 
-document.getElementById("queueBtn").onclick = function addRequest() {
-  document.getElementById("Home").style.display = "none";
-  document.getElementById("Add to Queue").style.display = "flex";
+window.onload = function() { //Wait for the window to load, then do the following:
+  document.getElementById("queue-btn").onclick = function addRequest() {
+    document.getElementById("home").style.display = "none";
+    document.getElementById("add-to-queue").style.display = "block";
+  };
+
+  document.getElementById("back-btn").onclick = function backToHome() {
+    document.getElementById("add-to-queue").style.display = "none";
+    document.getElementById("home").style.display = "block";
+  };
 };
 
-document.getElementById("backBtn").onclick = function backToHome() {
-  document.getElementById("Add to Queue").style.display = "none";
-  document.getElementById("Home").style.display = "flex";
-};
+// $(function() { // ← When document loads
+//   $("#queueBtn").on("click", function() {
+//     $("#home").hide();
+//     $("#addToQueue").show();
+//   });
+
+//   $("#backBtn").on("click", function() {
+//     $("#home").show();
+//     $("#addToQueue").hide();
+//   });
+// });

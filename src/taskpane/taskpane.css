@@ -82,3 +82,7 @@ h1 {
 b {
     font-weight: bold;
 }
+
+#add-to-queue {
+    display:none;
+}
