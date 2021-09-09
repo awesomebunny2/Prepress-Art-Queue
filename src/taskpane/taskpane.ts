@@ -384,6 +384,7 @@ async function onTableChanged(eventArgs: Excel.TableChangedEventArgs) { //This f
 //#region SORT BY DATE ------------------------------------------------------------------------------------------
 async function sortDate(eventArgs: Excel.TableChangedEventArgs) { //This function will be using event arguments to collect data from the workbook
   // console.log("SORT FUNCTION FIRED!");
+  console.log("Inside sort... eventArgs:")
   console.log(eventArgs);
 
   var theChange = eventArgs.changeType; //Kind of change that was made
@@ -391,37 +392,102 @@ async function sortDate(eventArgs: Excel.TableChangedEventArgs) { //This functio
 
   // console.log("args ");
 
+  /**
+   * If this is the table that the row has moved to...
+   * 
+   * 
+   */
+
+  if (eventArgs.changeType == "RowInserted") {
+    // This is the sort trigger on the table that the row was moved to!
+    Excel.run(async context => {
+      // Filter the table that the row was moved to!
+      console.log("Sorting the table that the row was moved to!");
+
+      // Grab the table
+      var changedTable = context.workbook.tables.getItem(eventArgs.tableId);
+
+      // Grab the data from the table
+      var bodyRange = changedTable.getDataBodyRange().load("values");
+
+      // Sync to access the data
+      return context.sync().then(function() {
+        console.log("SINKED. Table values:")
+        console.log(bodyRange.values); // bodyRange.values is an Array of Arrays!
+
+        var urgents = [];
+        var semiUrgents = [];
+        var notUrgents = [];
+        var eventuals = [];
+        var downtimes = [];
+
+        for (var i = 0; i < bodyRange.values.length; i++) {
+          if (bodyRange.values[i][14] == "Urgent") {
+            urgents.push(bodyRange.values[i]);
+          } else if (bodyRange.values[i][14] == "Semi Urgent") {
+            semiUrgents.push(bodyRange.values[i]);
+          } else if (bodyRange.values[i][14] == "Not Urgent") {
+            notUrgents.push(bodyRange.values[i]);
+          } else if (bodyRange.values[i][14] == "Eventual") {
+            eventuals.push(bodyRange.values[i]);
+          } else if (bodyRange.values[i][14] == "Downtime") {
+            downtimes.push(bodyRange.values[i]);
+          }
+        }
+        // console.log(urgents);
+
+        var newData = urgents.concat(semiUrgents, notUrgents, eventuals, downtimes);
+
+        console.log("NEW DATA:");
+        console.log(newData);
+
+        // Set the data for the changedTable
+        
+
+
+      });
+      
+      
+    }).catch(tryCatch);
+  }
   
   if (theChange == "RangeEdited" && (theDetails == undefined || theDetails.valueTypeAfter == "String")) { //&& theDetails == undefined) {
-    console.log("The sorting event has been initiated!!"); //Prevents an event from being triggered when a new row is inserted into the other sheet, thus causing duplicate runs
+    // console.log("The sorting event has been initiated!!"); //Prevents an event from being triggered when a new row is inserted into the other sheet, thus causing duplicate runs
 
     //#region SORTING VARIABLES ---------------------------------------------------------------------------------
     Excel.run(async context => {
+
       var changedTable = context.workbook.tables.getItem(eventArgs.tableId); //Returns tableId of the table where the event occured
+
       var tableRange = changedTable.getRange(); //Gets the range of the changed table
       var sortHeader = tableRange.find(sortColumn, {}); //Gets the range of the entire sortColumn (the "Date" column) from the changed table
       sortHeader.load("columnIndex");
-      sortHeader.load("values")
+      sortHeader.load("values");
+
+
+
       // var sortTag = ["Urgent", "Semi-Urgent", "Not Urgent", "Eventual", "Downtime"];
-      const list = [
-        { Tag: 'Urgent'},
-        { Tag: 'Semi-Urgent'},
-        { Tag: 'Not Urgent'},
-        { Tag: 'Eventual'},
-        { Tag: 'Downtime'},
-      ]
+      // const list = [
+      //   { Tag: 'Urgent'},
+      //   { Tag: 'Semi-Urgent'},
+      //   { Tag: 'Not Urgent'},
+      //   { Tag: 'Eventual'},
+      //   { Tag: 'Downtime'},
+      // ]
+
+
       //#endregion --------------------------------------------------------------------------------------------------
 
       //#region SORTING CONDITIONS --------------------------------------------------------------------------------
       return context.sync().then(function() {
-        console.log("Sync completed...Ready to sort")
+        // console.log("Sync completed...Ready to sort")
         console.log(sortHeader.columnIndex);
         // console.log(list);
 
-        if (sortHeader.columnIndex == 14) {
-          list.sort((a, b) => (a.Tag < b.Tag) ? 1 : -1);
-          console.log(list);
-        }
+        // if (sortHeader.columnIndex == 14) {
+        //   list.sort((a, b) => (a.Tag < b.Tag) ? 1 : -1);
+        //   console.log(list);
+        // }
 
         // tableRange.sort.apply(
         //   [
@@ -455,7 +521,7 @@ async function sortDate(eventArgs: Excel.TableChangedEventArgs) { //This functio
 
 
 
-        console.log("Sorting is completed.")
+        // console.log("Sorting is completed.")
       }); 
       //#endregion --------------------------------------------------------------------------------------------------
     }).catch(tryCatch); // CATCH EXCEL.RUN
