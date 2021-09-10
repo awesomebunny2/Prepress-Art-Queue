@@ -21,12 +21,13 @@ import "../../assets/icon-80.png";
 // console.log(list.sort((a,b) => (a.Tag < b.Tag) ? 1 : -1))
 
 //#region GLOBAL VARIABLES --------------------------------------------------------------------------------------
-var artistColumn = "Q";
+var artistColumn = "S";
 var moveEvent;
 // var eventsOff;
 // var eventsOn;
 var sortEvent;
 var sortColumn = "Tags";
+var projectTypeColumn = "Project Type";
 //#endregion ----------------------------------------------------------------------------------------------
 
 //#region TASKPANE BUTTONS ---------------------------------------------------------------------------------------
@@ -84,7 +85,7 @@ Office.onReady((info) => {
         
         moveEvent = context.workbook.tables.onChanged.add(onTableChanged);
 
-        sortEvent = context.workbook.tables.onChanged.add(sortDate);
+        // sortEvent = context.workbook.tables.onChanged.add(sortDate);
 
         return context.sync().then(function() { //Commits changes to document and then returns the console.log
           console.log("Event handlers have been successfully registered");
@@ -127,14 +128,15 @@ Office.onReady((info) => {
 //#region MOVES DATA BETWEEN WORKSHEETS ------------------------------------------------------------------------
 async function onTableChanged(eventArgs: Excel.TableChangedEventArgs) { //This function will be using event arguments to collect data from the workbook
   await Excel.run(async (context) => {
+
+
+    // Print the before and after types and values to the console.
+    // console.log(`Change at ${address}: was ${details.valueBefore}(${details.valueTypeBefore}),`
+    //     + ` now is ${details.valueAfter}(${details.valueTypeAfter})`);
+
   
     var theChange = eventArgs.changeType; //Kind of change that was made
-    // console.log("args ");
-    // console.log(eventArgs);
-    // if (theChange == "RowInserted" || eventArgs.details == undefined || (eventArgs.details.valueTypeBefore == "Empty" && eventArgs.details.valueTypeAfter == "Double")) {
-    //   return; //Prevents an event from being triggered when a new row is inserted into the other sheet, thus causing duplicate runs
-    // }
-    if (theChange == "RangeEdited" && eventArgs.details !== undefined) {
+    if (theChange == "RangeEdited" && eventArgs.details !== undefined ) {
       
       console.log("The move data event has been initiated!!");
       
@@ -148,13 +150,19 @@ async function onTableChanged(eventArgs: Excel.TableChangedEventArgs) { //This f
       var details = eventArgs.details; //Loads the values before and after the event
       var address = eventArgs.address; //Loads the cell's address where the event took place
       var changedTable = context.workbook.tables.getItem(eventArgs.tableId).load("name"); //Returns tableId of the table where the event occured
-      // var newRange = changedTable.getDataBodyRange().load("address");
+      var tableRange = changedTable.getRange();
+      var possiblyAShark = changedTable.columns.load("Project Type");
+      var findColumnByName = tableRange.find(projectTypeColumn, {}); //Gets the range of the entire sortColumn (the "Date" column) from the changed table
       var regexStr = address.match(/[a-zA-Z]+|[0-9]+(?:\.[0-9]+|)/g); //Separates the column letter(s) from the row number for the address: presented as a string
       var changedColumn = regexStr[0]; //The first instance of the separated address array, being the column letter(s)
       var changedRow = Number(regexStr[1]) - 2; //The second instance of the separated address array, being the row, converted into a number and subtracted by 2
       var myRow = changedTable.rows.getItemAt(changedRow).load("values"); //loads the values of the changed row in the table where the event was fired
       
       //#endregion ------------------------------------------------------------------------------------------------
+
+      // console.log(tableRange);
+          // if(sortHeader.columnIndex == )
+
 
       //#region SPECIFIC TABLE VARIABLES --------------------------------------------------------------------------
         //#region UNASSIGNED PROJECTS VARIABLES ------------------------------------------------------------
@@ -253,9 +261,9 @@ async function onTableChanged(eventArgs: Excel.TableChangedEventArgs) { //This f
 
     //#region MOVE CONDITIONS -----------------------------------------------------------------------------------
         
-      await context.sync() //Commits data to variables above
-
-      .then(function () {
+      await context.sync().then(function () {
+        console.log(possiblyAShark);
+        console.log(findColumnByName);
         console.log("Synced!");
         // console.log(`
         //   changedColumn: ${changedColumn}
@@ -487,3 +495,27 @@ async function tryCatch(callback) {
   }
 }
 //#endregion ---------------------------------------------------------------------------------------------------
+
+var a = ["Brand New Build", "Special Request"];
+var b = ["Brand New Build from Other Product Natives", "Brand New Build From Template", "Changes to Exisiting Natives", "Specification Check", "WeTransfer Upload to MS"];
+var x = "";
+
+function lookupStart(input) {
+  
+    var output;
+
+    if (a.includes(input)) {
+        output = 4;
+    } else if(b.includes(input)) {
+        output = 2;
+    } else {
+        output = 24;
+    }
+
+    return output;
+
+}
+
+
+var whereIsIt = lookupStart("Brand New Build from Other Product Natives");
+console.log(whereIsIt);
