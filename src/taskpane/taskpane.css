@@ -15,7 +15,15 @@
      margin: 0;
      padding: 0;
  }
+
+ .home {
+     transition: slideleft;
+ }
  
+ .add-to-queue {
+     transition: slideleft;
+ }
+
  .ms-welcome__header {
     padding: 20px;
     padding-bottom: 30px;

@@ -29,6 +29,20 @@ var sortEvent;
 var sortColumn = "Tags";
 //#endregion ----------------------------------------------------------------------------------------------
 
+//#region TASKPANE BUTTONS ---------------------------------------------------------------------------------------
+window.onload = function() { //Wait for the window to load, then do the following:
+  document.getElementById("queue-btn").onclick = function addRequest() {
+    document.getElementById("home").style.display = "none";
+    document.getElementById("add-to-queue").style.display = "block";
+  };
+
+  document.getElementById("back-btn").onclick = function backToHome() {
+    document.getElementById("add-to-queue").style.display = "none";
+    document.getElementById("home").style.display = "block";
+  };
+};
+//#endregion ------------------------------------------------------------------------------------------------------
+
 //#region CHECKBOX SETUP ________________________________________________________________________________________
 /** When the checkbox is CHANGED */
 $("#set-behavior").on("change", function() {
@@ -473,31 +487,3 @@ async function tryCatch(callback) {
   }
 }
 //#endregion ---------------------------------------------------------------------------------------------------
-// var home = document.getElementById("home");
-// var addToQueue = document.getElementById("add-to-queue");
-// var queueBtn = document.getElementById("queue-btn");
-// var backBtn = document.getElementById("back-btn");
-
-window.onload = function() { //Wait for the window to load, then do the following:
-  document.getElementById("queue-btn").onclick = function addRequest() {
-    document.getElementById("home").style.display = "none";
-    document.getElementById("add-to-queue").style.display = "block";
-  };
-
-  document.getElementById("back-btn").onclick = function backToHome() {
-    document.getElementById("add-to-queue").style.display = "none";
-    document.getElementById("home").style.display = "block";
-  };
-};
-
-// $(function() { // ← When document loads
-//   $("#queueBtn").on("click", function() {
-//     $("#home").hide();
-//     $("#addToQueue").show();
-//   });
-
-//   $("#backBtn").on("click", function() {
-//     $("#home").show();
-//     $("#addToQueue").hide();
-//   });
-// });
