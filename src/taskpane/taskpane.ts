@@ -26,7 +26,7 @@ var moveEvent;
 // var eventsOff;
 // var eventsOn;
 var sortEvent;
-var sortColumn = "Tags";
+var sortColumn = "Priority";
 var projectTypeColumn = "Project Type";
 //#endregion ----------------------------------------------------------------------------------------------
 
@@ -151,7 +151,7 @@ async function onTableChanged(eventArgs: Excel.TableChangedEventArgs) { //This f
       var address = eventArgs.address; //Loads the cell's address where the event took place
       var changedTable = context.workbook.tables.getItem(eventArgs.tableId).load("name"); //Returns tableId of the table where the event occured
       var tableRange = changedTable.getRange();
-      var possiblyAShark = changedTable.columns.load("Project Type");
+      // var possiblyAShark = changedTable.columns.load("Project Type");
       var findColumnByName = tableRange.find(projectTypeColumn, {}); //Gets the range of the entire sortColumn (the "Date" column) from the changed table
       var regexStr = address.match(/[a-zA-Z]+|[0-9]+(?:\.[0-9]+|)/g); //Separates the column letter(s) from the row number for the address: presented as a string
       var changedColumn = regexStr[0]; //The first instance of the separated address array, being the column letter(s)
@@ -263,7 +263,7 @@ async function onTableChanged(eventArgs: Excel.TableChangedEventArgs) { //This f
     //#region MOVE CONDITIONS -----------------------------------------------------------------------------------
         
       await context.sync().then(function () {
-        console.log(possiblyAShark);
+        // console.log(possiblyAShark);
         console.log(findColumnByName);
         console.log("Synced!");
         // console.log(`
@@ -424,42 +424,42 @@ async function sortDate(eventArgs: Excel.TableChangedEventArgs) { //This functio
       var tableRange = changedTable.getRange(); //Gets the range of the changed table
       var sortHeader = tableRange.find(sortColumn, {}); //Gets the range of the entire sortColumn (the "Date" column) from the changed table
       sortHeader.load("columnIndex");
-      sortHeader.load("values")
+      sortHeader.load("addressLocal")
       // var sortTag = ["Urgent", "Semi-Urgent", "Not Urgent", "Eventual", "Downtime"];
-      const list = [
-        { Tag: 'Urgent'},
-        { Tag: 'Semi-Urgent'},
-        { Tag: 'Not Urgent'},
-        { Tag: 'Eventual'},
-        { Tag: 'Downtime'},
-      ]
+      // const list = [
+      //   { Tag: 'Urgent'},
+      //   { Tag: 'Semi-Urgent'},
+      //   { Tag: 'Not Urgent'},
+      //   { Tag: 'Eventual'},
+      //   { Tag: 'Downtime'},
+      // ]
       //#endregion --------------------------------------------------------------------------------------------------
 
       //#region SORTING CONDITIONS --------------------------------------------------------------------------------
       return context.sync().then(function() {
         console.log("Sync completed...Ready to sort")
-        console.log(sortHeader.columnIndex);
+        console.log(sortHeader.addressLocal);
         // console.log(list);
 
-        if (sortHeader.columnIndex == 14) {
-          list.sort((a, b) => (a.Tag < b.Tag) ? 1 : -1);
-          console.log(list);
-        }
+        // if (sortHeader.columnIndex == 14) {
+        //   list.sort((a, b) => (a.Tag < b.Tag) ? 1 : -1);
+        //   console.log(list);
+        // }
 
-        // tableRange.sort.apply(
-        //   [
-        //     { //list of conditions to sort on
-        //       key: sortHeader.columnIndex, //sorts based on data in Date column
-        //       sortOn: Excel.SortOn.value, //sorts based on cell vlaues
-        //       ascending: true
-        //       // subField: Excel.subField, //sorts based on cell vlaues
-        //       // subField: String(sortTag)
-        //     }
-        //   ],
-        //   false, //will not impact string ordering
-        //   true, //table has headers
-        //   Excel.SortOrientation.rows //sorts the rows based on previous conditions
-        // );
+        tableRange.sort.apply(
+          [
+            { //list of conditions to sort on
+              key: sortHeader.columnIndex, //sorts based on data in Date column
+              sortOn: Excel.SortOn.value, //sorts based on cell vlaues
+              ascending: true
+              // subField: Excel.subField, //sorts based on cell vlaues
+              // subField: String(sortTag)
+            }
+          ],
+          false, //will not impact string ordering
+          true, //table has headers
+          Excel.SortOrientation.rows //sorts the rows based on previous conditions
+        );
 
         // const myArray = [1, 2, 3, 4, 5, 6];
         // let filteredArray = list.filter((x) => {
