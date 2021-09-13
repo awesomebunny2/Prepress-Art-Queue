@@ -210,9 +210,12 @@ async function onTableChanged(eventArgs: Excel.TableChangedEventArgs) { //This f
       await context.sync().then(function () {
         console.log("Promise Fulfilled!");
 
+        var rowValues = myRow.values;
+
         if (changedColumn == projectTypeColumn || productColumn) { //if updated data was in Project Type column, run the lookupStart function
-          lookupStart(changedTable, changedRow); //inserts the new data as the function's input
-          preLookupWork(changedTable, changedRow, x);
+          lookupStart(rowValues, changedTable, changedRow); //inserts the new data as the function's input
+          preLookupWork(rowValues, changedTable, changedRow, x);
+          // prioritySort(rowValues, changedTable, changedRow, x);
         }
 
         // if (changedColumn == productColumn) { //if updated data was in Project Type column, run the lookupStart function
@@ -446,13 +449,18 @@ async function tryCatch(callback) {
 //#endregion ---------------------------------------------------------------------------------------------------
 
    
-// function prioritySort(changedTable, changedRow) {
-  // Excel.run(async context => { //Do while Excel is running
+// function prioritySort(changedTable, changedRow, x) {
+//   Excel.run(async context => { //Do while Excel is running
 
-    function lookupStart(changedTable, changedRow) {
+    function lookupStart(rowValues, changedTable, changedRow) {
       var address = "H" + (changedRow + 2);
       console.log("The address of the new Project Type is " + address);
-      var input = changedTable.rows.getItemAt(address).load("values");
+      console.log(rowValues);
+      console.log(rowValues[7]);
+      // var input = changedTable.rows.getItemAt(address).load("values");
+      var input = rowValues[7];
+      console.log(input);
+
 
       // context.sync()
 
@@ -473,7 +481,7 @@ async function tryCatch(callback) {
       return output;
     };
 
-    function preLookupWork(changedTable, changedRow, x) {
+    function preLookupWork(rowValues, changedTable, changedRow, x) {
       var address = "G" + (changedRow + 2);
       console.log("The address of the new Product is " + address);
       var input = changedTable.rows.getItemAt(address).load("values");
@@ -502,4 +510,5 @@ async function tryCatch(callback) {
       } console.log(output);
       return output;
     };
-  // };
+//   });
+// };
