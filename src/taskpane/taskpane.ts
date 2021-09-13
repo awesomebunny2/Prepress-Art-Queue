@@ -17,6 +17,7 @@ var sortEvent;
 var sortColumn = "Priority";
 var projectTypeColumn = "H";
 var productColumn = "G";
+var x;
 //#endregion ----------------------------------------------------------------------------------------------
 
 //#region TASKPANE BUTTONS ---------------------------------------------------------------------------------------
@@ -210,7 +211,8 @@ async function onTableChanged(eventArgs: Excel.TableChangedEventArgs) { //This f
         console.log("Promise Fulfilled!");
 
         if (changedColumn == projectTypeColumn || productColumn) { //if updated data was in Project Type column, run the lookupStart function
-          prioritySort(changedTable, changedRow); //inserts the new data as the function's input
+          lookupStart(changedTable, changedRow); //inserts the new data as the function's input
+          preLookupWork(changedTable, changedRow, x);
         }
 
         // if (changedColumn == productColumn) { //if updated data was in Project Type column, run the lookupStart function
@@ -444,7 +446,7 @@ async function tryCatch(callback) {
 //#endregion ---------------------------------------------------------------------------------------------------
 
    
-function prioritySort(changedTable, changedRow) {
+// function prioritySort(changedTable, changedRow) {
   // Excel.run(async context => { //Do while Excel is running
 
     function lookupStart(changedTable, changedRow) {
@@ -460,17 +462,21 @@ function prioritySort(changedTable, changedRow) {
       var b = ["Brand New Build from Other Product Natives", "Brand New Build From Template", "Changes to Exisiting Natives", "Specification Check", "WeTransfer Upload to MS"];
       var output;
 
-      if (a.includes(input)) {
+      if (a.includes(input.values)) {
         output = 4;
-      } else if(b.includes(input)) {
+      } else if(b.includes(input.values)) {
         output = 2;
       } else {
         output = 24;
       } console.log(output);
+      x = output;
       return output;
     };
 
-    function preLookupWork(input) {
+    function preLookupWork(changedTable, changedRow, x) {
+      var address = "G" + (changedRow + 2);
+      console.log("The address of the new Product is " + address);
+      var input = changedTable.rows.getItemAt(address).load("values");
       var a = ["Menu", "Brochure", "Coupon Booklet", "Jumbo Postcard"];
       var b = ["MenuXL", "BrochureXL", "Folded Magnet", "Colossal Postcard", "Large Plastic"];
       var c = ["Small Menu", "Small Brochure", "Flyer", "Letter", "Envelope Mailer", "Postcard", "Magnet", "Door Hanger", "New Mover", "Birthday??", "Logo Creation"];
@@ -479,21 +485,21 @@ function prioritySort(changedTable, changedRow) {
       var f = ["Medium Plastic"];
       var output;
 
-      if (a.includes(input)) {
+      if (a.includes(input.values)) {
         output = 10;
-      } else if (b.includes(input)) {
+      } else if (b.includes(input.values)) {
         output = 18;
-      } else if (c.includes(input)) {
+      } else if (c.includes(input.values)) {
         output = 4;
-      } else if (d.includes(input)) {
+      } else if (d.includes(input.values)) {
         output = 2;
-      } else if (e.includes(input)) {
+      } else if (e.includes(input.values)) {
         output = 7;
-      } else if (f.includes(input)) {
+      } else if (f.includes(input.values)) {
         output = 15;
       } else {
         output = 96;
       } console.log(output);
       return output;
     };
-  };
+  // };
