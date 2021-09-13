@@ -18,6 +18,7 @@ var sortColumn = "Priority";
 var projectTypeColumn = "H";
 var productColumn = "G";
 var x;
+var y;
 //#endregion ----------------------------------------------------------------------------------------------
 
 //#region TASKPANE BUTTONS ---------------------------------------------------------------------------------------
@@ -210,11 +211,13 @@ async function onTableChanged(eventArgs: Excel.TableChangedEventArgs) { //This f
       await context.sync().then(function () {
         console.log("Promise Fulfilled!");
 
+        console.log(myRow.values);
+
         var rowValues = myRow.values;
 
         if (changedColumn == projectTypeColumn || productColumn) { //if updated data was in Project Type column, run the lookupStart function
-          lookupStart(rowValues, changedTable, changedRow); //inserts the new data as the function's input
-          preLookupWork(rowValues, changedTable, changedRow, x);
+          lookupStart(rowValues, changedRow); //inserts the new data as the function's input
+          preLookupWork(rowValues, changedRow);
           // prioritySort(rowValues, changedTable, changedRow, x);
         }
 
@@ -452,39 +455,36 @@ async function tryCatch(callback) {
 // function prioritySort(changedTable, changedRow, x) {
 //   Excel.run(async context => { //Do while Excel is running
 
-    function lookupStart(rowValues, changedTable, changedRow) {
+    function lookupStart(rowValues, changedRow) {
       var address = "H" + (changedRow + 2);
       console.log("The address of the new Project Type is " + address);
-      console.log(rowValues);
-      console.log(rowValues[7]);
-      // var input = changedTable.rows.getItemAt(address).load("values");
-      var input = rowValues[7];
+      var input = rowValues[0][7];
       console.log(input);
 
 
       // context.sync()
 
-      console.log("The values of Project Type: " + input.values);
-
       var a = ["Brand New Build", "Special Request"];
       var b = ["Brand New Build from Other Product Natives", "Brand New Build From Template", "Changes to Exisiting Natives", "Specification Check", "WeTransfer Upload to MS"];
       var output;
 
-      if (a.includes(input.values)) {
+      if (a.includes(input)) {
         output = 4;
-      } else if(b.includes(input.values)) {
+      } else if(b.includes(input)) {
         output = 2;
       } else {
         output = 24;
       } console.log(output);
       x = output;
+      console.log(x);
       return output;
     };
 
-    function preLookupWork(rowValues, changedTable, changedRow, x) {
+    function preLookupWork(rowValues, changedRow) {
       var address = "G" + (changedRow + 2);
       console.log("The address of the new Product is " + address);
-      var input = changedTable.rows.getItemAt(address).load("values");
+      var input = rowValues[0][6];
+      console.log(input);
       var a = ["Menu", "Brochure", "Coupon Booklet", "Jumbo Postcard"];
       var b = ["MenuXL", "BrochureXL", "Folded Magnet", "Colossal Postcard", "Large Plastic"];
       var c = ["Small Menu", "Small Brochure", "Flyer", "Letter", "Envelope Mailer", "Postcard", "Magnet", "Door Hanger", "New Mover", "Birthday??", "Logo Creation"];
@@ -493,21 +493,23 @@ async function tryCatch(callback) {
       var f = ["Medium Plastic"];
       var output;
 
-      if (a.includes(input.values)) {
+      if (a.includes(input)) {
         output = 10;
-      } else if (b.includes(input.values)) {
+      } else if (b.includes(input)) {
         output = 18;
-      } else if (c.includes(input.values)) {
+      } else if (c.includes(input)) {
         output = 4;
-      } else if (d.includes(input.values)) {
+      } else if (d.includes(input)) {
         output = 2;
-      } else if (e.includes(input.values)) {
+      } else if (e.includes(input)) {
         output = 7;
-      } else if (f.includes(input.values)) {
+      } else if (f.includes(input)) {
         output = 15;
       } else {
         output = 96;
       } console.log(output);
+      var y = output + x;
+      console.log(y);
       return output;
     };
 //   });
