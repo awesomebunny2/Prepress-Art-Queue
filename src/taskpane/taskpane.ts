@@ -208,7 +208,7 @@ async function onTableChanged(eventArgs: Excel.TableChangedEventArgs) { //This f
       await context.sync().then(function () {
         console.log("Promise Fulfilled!");
 
-        if (changedColumn == projectTypeColumn) { //If updated data was in Project Type column, run the lookupStart function
+        if (changedColumn == projectTypeColumn) { //if updated data was in Project Type column, run the lookupStart function
           lookupStart(details.valueAfter); //inserts the new data as the function's input
         }
 
@@ -337,7 +337,7 @@ async function onTableChanged(eventArgs: Excel.TableChangedEventArgs) { //This f
           } return context.sync();
         };
       }).catch(function (error) {
-        console.log("I farted");
+        console.log("Promise Rejected");
       });
     //#endregion ------------------------------------------------------------------------------------------------
     };
@@ -442,17 +442,14 @@ async function tryCatch(callback) {
 
       var a = ["Brand New Build", "Special Request"];
       var b = ["Brand New Build from Other Product Natives", "Brand New Build From Template", "Changes to Exisiting Natives", "Specification Check", "WeTransfer Upload to MS"];
-      
-        var output;
+      var output;
 
-        if (a.includes(input)) {
-            output = 4;
-        } else if(b.includes(input)) {
-            output = 2;
-        } else {
-            output = 24;
-        }
-        console.log(output);
-
-        return output;
-      };
+      if (a.includes(input)) {
+        output = 4;
+      } else if(b.includes(input)) {
+        output = 2;
+      } else {
+        output = 24;
+      } console.log(output);
+      return output;
+    };
