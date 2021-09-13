@@ -27,7 +27,6 @@ var moveEvent;
 // var eventsOn;
 var sortEvent;
 var sortColumn = "Priority";
-var projectTypeColumn = "Project Type";
 //#endregion ----------------------------------------------------------------------------------------------
 
 //#region TASKPANE BUTTONS ---------------------------------------------------------------------------------------
@@ -129,11 +128,6 @@ Office.onReady((info) => {
 async function onTableChanged(eventArgs: Excel.TableChangedEventArgs) { //This function will be using event arguments to collect data from the workbook
   await Excel.run(async (context) => {
 
-
-    // Print the before and after types and values to the console.
-    // console.log(`Change at ${address}: was ${details.valueBefore}(${details.valueTypeBefore}),`
-    //     + ` now is ${details.valueAfter}(${details.valueTypeAfter})`);
-
   
     var theChange = eventArgs.changeType; //Kind of change that was made
     if (theChange == "RangeEdited" && eventArgs.details !== undefined ) {
@@ -151,18 +145,11 @@ async function onTableChanged(eventArgs: Excel.TableChangedEventArgs) { //This f
       var address = eventArgs.address; //Loads the cell's address where the event took place
       var changedTable = context.workbook.tables.getItem(eventArgs.tableId).load("name"); //Returns tableId of the table where the event occured
       var tableRange = changedTable.getRange();
-      // var possiblyAShark = changedTable.columns.load("Project Type");
-      var findColumnByName = tableRange.find(projectTypeColumn, {}); //Gets the range of the entire sortColumn (the "Date" column) from the changed table
       var regexStr = address.match(/[a-zA-Z]+|[0-9]+(?:\.[0-9]+|)/g); //Separates the column letter(s) from the row number for the address: presented as a string
       var changedColumn = regexStr[0]; //The first instance of the separated address array, being the column letter(s)
       var changedRow = Number(regexStr[1]) - 2; //The second instance of the separated address array, being the row, converted into a number and subtracted by 2
-      var myRow = changedTable.rows.getItemAt(changedRow).load("values"); //loads the values of the changed row in the table where the event was fired
-      // var assignArtistColumn = tableRange.find(artistColumn, {}); //Gets the range of the entire sortColumn (the "Date" column) from the changed table
-      
+      var myRow = changedTable.rows.getItemAt(changedRow).load("values"); //loads the values of the changed row in the table where the event was fired      
       //#endregion ------------------------------------------------------------------------------------------------
-
-      // console.log(tableRange);
-          // if(sortHeader.columnIndex == )
 
 
       //#region SPECIFIC TABLE VARIABLES --------------------------------------------------------------------------
@@ -263,8 +250,6 @@ async function onTableChanged(eventArgs: Excel.TableChangedEventArgs) { //This f
     //#region MOVE CONDITIONS -----------------------------------------------------------------------------------
         
       await context.sync().then(function () {
-        // console.log(possiblyAShark);
-        console.log(findColumnByName);
         console.log("Synced!");
         // console.log(`
         //   changedColumn: ${changedColumn}
@@ -497,26 +482,26 @@ async function tryCatch(callback) {
 }
 //#endregion ---------------------------------------------------------------------------------------------------
 
-var a = ["Brand New Build", "Special Request"];
-var b = ["Brand New Build from Other Product Natives", "Brand New Build From Template", "Changes to Exisiting Natives", "Specification Check", "WeTransfer Upload to MS"];
-var x = "";
+// var a = ["Brand New Build", "Special Request"];
+// var b = ["Brand New Build from Other Product Natives", "Brand New Build From Template", "Changes to Exisiting Natives", "Specification Check", "WeTransfer Upload to MS"];
+// var x = "";
 
-function lookupStart(input) {
+// function lookupStart(input) {
   
-    var output;
+//     var output;
 
-    if (a.includes(input)) {
-        output = 4;
-    } else if(b.includes(input)) {
-        output = 2;
-    } else {
-        output = 24;
-    }
+//     if (a.includes(input)) {
+//         output = 4;
+//     } else if(b.includes(input)) {
+//         output = 2;
+//     } else {
+//         output = 24;
+//     }
 
-    return output;
+//     return output;
 
-}
+// }
 
 
-var whereIsIt = lookupStart("Brand New Build from Other Product Natives");
-console.log(whereIsIt);
+// var whereIsIt = lookupStart("Brand New Build from Other Product Natives");
+// console.log(whereIsIt);
