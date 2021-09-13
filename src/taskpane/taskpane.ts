@@ -157,6 +157,7 @@ async function onTableChanged(eventArgs: Excel.TableChangedEventArgs) { //This f
       var changedColumn = regexStr[0]; //The first instance of the separated address array, being the column letter(s)
       var changedRow = Number(regexStr[1]) - 2; //The second instance of the separated address array, being the row, converted into a number and subtracted by 2
       var myRow = changedTable.rows.getItemAt(changedRow).load("values"); //loads the values of the changed row in the table where the event was fired
+      // var assignArtistColumn = tableRange.find(artistColumn, {}); //Gets the range of the entire sortColumn (the "Date" column) from the changed table
       
       //#endregion ------------------------------------------------------------------------------------------------
 
