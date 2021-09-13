@@ -10,21 +10,9 @@ import "../../assets/icon-32.png";
 import "../../assets/icon-80.png";
 //#endregion ----------------------------------------------------------------------------------------------------
 
-// var list = [
-//   { Tag: 'Eventual'},
-//   { Tag: 'Semi-Urgent'},
-//   { Tag: 'Urgent'},
-//   { Tag: 'Not Urgent'},
-//   { Tag: 'Downtime'}
-// ]
-
-// console.log(list.sort((a,b) => (a.Tag < b.Tag) ? 1 : -1))
-
 //#region GLOBAL VARIABLES --------------------------------------------------------------------------------------
 var artistColumn = "S";
 var moveEvent;
-// var eventsOff;
-// var eventsOn;
 var sortEvent;
 var sortColumn = "Priority";
 //#endregion ----------------------------------------------------------------------------------------------
@@ -78,9 +66,6 @@ Office.onReady((info) => {
       document.getElementById("app-body").style.display = "flex"; //Keep content in taskpane flexible to scaling, I think...
         
       Excel.run(async context => { //Do while Excel is running
-        // turnEventsOn();
-
-        // console.log("Events are turned on!");
         
         moveEvent = context.workbook.tables.onChanged.add(onTableChanged);
 
@@ -94,36 +79,6 @@ Office.onReady((info) => {
 });
 //#endregion ------------------------------------------------------------------------------------------------
 
-//#region TOGGLE EVENTS ----------------------------------------------------------------------------------------
-
-  //#region EVENTS OFF -----------------------------------------------------------------------------------------
-  // async function turnEventsOff() {
-  //   Excel.run(function (context) {
-  //     context.runtime.load("enableEvents");
-  //     return context.sync()
-  //         .then(function () {
-  //           eventsOff = !context.runtime.enableEvents;
-  //           return;
-  //         });
-  //   });
-  // };
-  //#endregion ----------------------------------------------------------------------------------------------
-
-  //#region EVENTS ON ------------------------------------------------------------------------------------------
-  // async function turnEventsOn() {
-  //   Excel.run(function turnEventsOn(context) {
-  //     context.runtime.load("enableEvents");
-  //     return context.sync()
-  //         .then(function () {
-  //           eventsOn = context.runtime.enableEvents;
-  //           return;
-  //         });
-  //   });
-  // };
-  //#endregion ------------------------------------------------------------------------------------------------
-
-//#endregion ---------------------------------------------------------------------------------------------------
-
 //#region MOVES DATA BETWEEN WORKSHEETS ------------------------------------------------------------------------
 async function onTableChanged(eventArgs: Excel.TableChangedEventArgs) { //This function will be using event arguments to collect data from the workbook
   await Excel.run(async (context) => {
@@ -131,6 +86,8 @@ async function onTableChanged(eventArgs: Excel.TableChangedEventArgs) { //This f
   
     var theChange = eventArgs.changeType; //Kind of change that was made
     if (theChange == "RangeEdited" && eventArgs.details !== undefined ) {
+
+      console.log(eventArgs)
       
       console.log("The move data event has been initiated!!");
       
@@ -144,7 +101,6 @@ async function onTableChanged(eventArgs: Excel.TableChangedEventArgs) { //This f
       var details = eventArgs.details; //Loads the values before and after the event
       var address = eventArgs.address; //Loads the cell's address where the event took place
       var changedTable = context.workbook.tables.getItem(eventArgs.tableId).load("name"); //Returns tableId of the table where the event occured
-      var tableRange = changedTable.getRange();
       var regexStr = address.match(/[a-zA-Z]+|[0-9]+(?:\.[0-9]+|)/g); //Separates the column letter(s) from the row number for the address: presented as a string
       var changedColumn = regexStr[0]; //The first instance of the separated address array, being the column letter(s)
       var changedRow = Number(regexStr[1]) - 2; //The second instance of the separated address array, being the row, converted into a number and subtracted by 2
@@ -247,16 +203,12 @@ async function onTableChanged(eventArgs: Excel.TableChangedEventArgs) { //This f
         //#endregion ---------------------------------------------------------------------------
       //#endregion ------------------------------------------------------------------------------------------------
 
+      console.log("Fight Me!");
+
     //#region MOVE CONDITIONS -----------------------------------------------------------------------------------
         
       await context.sync().then(function () {
         console.log("Synced!");
-        // console.log(`
-        //   changedColumn: ${changedColumn}
-        //   artistColumn: ${artistColumn}
-        //   details.valueAfter: ${details.valueAfter}
-        //   myRow: ${myRow.values}
-        // `);
 
 
         if (changedColumn == artistColumn) {
