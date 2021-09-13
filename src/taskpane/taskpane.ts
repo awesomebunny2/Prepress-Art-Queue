@@ -16,6 +16,7 @@ var moveEvent;
 var sortEvent;
 var sortColumn = "Priority";
 var projectTypeColumn = "H";
+var productColumn = "G";
 //#endregion ----------------------------------------------------------------------------------------------
 
 //#region TASKPANE BUTTONS ---------------------------------------------------------------------------------------
@@ -208,9 +209,13 @@ async function onTableChanged(eventArgs: Excel.TableChangedEventArgs) { //This f
       await context.sync().then(function () {
         console.log("Promise Fulfilled!");
 
-        if (changedColumn == projectTypeColumn) { //if updated data was in Project Type column, run the lookupStart function
-          lookupStart(details.valueAfter); //inserts the new data as the function's input
+        if (changedColumn == projectTypeColumn || productColumn) { //if updated data was in Project Type column, run the lookupStart function
+          prioritySort(changedTable, changedRow); //inserts the new data as the function's input
         }
+
+        // if (changedColumn == productColumn) { //if updated data was in Project Type column, run the lookupStart function
+        //   preLookupWork(details.valueAfter); //inserts the new data as the function's input
+        // } //NEED TO ADD RETURNED OUTPUT FROM LOOKUPSTART TO THE RETURNED VALUE OF THIS FUNCTION!!!!!!!!!!!----------------------
 
 
         if (changedColumn == artistColumn) { //if updated data was in the Artist column, run the following code
@@ -438,7 +443,18 @@ async function tryCatch(callback) {
 }
 //#endregion ---------------------------------------------------------------------------------------------------
 
-    function lookupStart(input) {
+   
+function prioritySort(changedTable, changedRow) {
+  // Excel.run(async context => { //Do while Excel is running
+
+    function lookupStart(changedTable, changedRow) {
+      var address = "H" + (changedRow + 2);
+      console.log("The address of the new Project Type is " + address);
+      var input = changedTable.rows.getItemAt(address).load("values");
+
+      // context.sync()
+
+      console.log("The values of Project Type: " + input.values);
 
       var a = ["Brand New Build", "Special Request"];
       var b = ["Brand New Build from Other Product Natives", "Brand New Build From Template", "Changes to Exisiting Natives", "Specification Check", "WeTransfer Upload to MS"];
@@ -453,3 +469,31 @@ async function tryCatch(callback) {
       } console.log(output);
       return output;
     };
+
+    function preLookupWork(input) {
+      var a = ["Menu", "Brochure", "Coupon Booklet", "Jumbo Postcard"];
+      var b = ["MenuXL", "BrochureXL", "Folded Magnet", "Colossal Postcard", "Large Plastic"];
+      var c = ["Small Menu", "Small Brochure", "Flyer", "Letter", "Envelope Mailer", "Postcard", "Magnet", "Door Hanger", "New Mover", "Birthday??", "Logo Creation"];
+      var d = ["2SBT", "Box Topper", "Logo Recreation", "Business Cards"];
+      var e = ["Scratch-Off Postcard", "Peel-A-Box Postcard", "Small Plastic", "Plastic New Mover", "Wide Format", "Artwork Only"];
+      var f = ["Medium Plastic"];
+      var output;
+
+      if (a.includes(input)) {
+        output = 10;
+      } else if (b.includes(input)) {
+        output = 18;
+      } else if (c.includes(input)) {
+        output = 4;
+      } else if (d.includes(input)) {
+        output = 2;
+      } else if (e.includes(input)) {
+        output = 7;
+      } else if (f.includes(input)) {
+        output = 15;
+      } else {
+        output = 96;
+      } console.log(output);
+      return output;
+    };
+  };
