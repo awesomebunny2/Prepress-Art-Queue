@@ -15,6 +15,7 @@ var artistColumn = "S";
 var moveEvent;
 var sortEvent;
 var sortColumn = "Priority";
+var projectTypeColumn = "H";
 //#endregion ----------------------------------------------------------------------------------------------
 
 //#region TASKPANE BUTTONS ---------------------------------------------------------------------------------------
@@ -92,7 +93,6 @@ async function onTableChanged(eventArgs: Excel.TableChangedEventArgs) { //This f
     var changedRow = Number(regexStr[1]) - 2; //The second instance of the separated address array, being the row, converted into a number and subtracted by 2
     var myRow = changedTable.rows.getItemAt(changedRow).load("values"); //loads the values of the changed row in the table where the event was fired      
     //#endregion ------------------------------------------------------------------------------------------------
-
 
     //#region SPECIFIC TABLE VARIABLES --------------------------------------------------------------------------
       //#region UNASSIGNED PROJECTS VARIABLES ------------------------------------------------------------
@@ -193,7 +193,7 @@ async function onTableChanged(eventArgs: Excel.TableChangedEventArgs) { //This f
     var theChange = eventArgs.changeType; //Kind of change that was made
     if (theChange == "RangeEdited" && eventArgs.details !== undefined ) {
 
-      console.log(eventArgs)
+      // console.log(eventArgs)
       
       console.log("The move data event has been initiated!!");
       
@@ -205,128 +205,132 @@ async function onTableChanged(eventArgs: Excel.TableChangedEventArgs) { //This f
 
     //#region MOVE CONDITIONS -----------------------------------------------------------------------------------
         
-      await context.sync().then(function moveConditions() {
+      await context.sync().then(function () {
         console.log("Promise Fulfilled!");
 
+        if (changedColumn == projectTypeColumn) { //If updated data was in Project Type column, run the lookupStart function
+          lookupStart(details.valueAfter); //inserts the new data as the function's input
+        }
 
-        if (changedColumn == artistColumn) {
+
+        if (changedColumn == artistColumn) { //if updated data was in the Artist column, run the following code
 
           if (details.valueAfter == "Unassigned") {
             unassignedTable.rows.add(null, myRow.values); //Adds empty row to bottom of GreenBasket Table, then inserts the changed values into this empty row
             myRow.delete(); //Deletes the changed row from the original sheet
-            console.log("Data was moved to the Unassigned Projects!");
+            console.log("Data was moved to the Unassigned Projects Table!");
             return;
 
           } else if (details.valueAfter == "Matt") {
             mattTable.rows.add(null, myRow.values); //Adds empty row to bottom of GreenBasket Table, then inserts the changed values into this empty row
             myRow.delete(); //Deletes the changed row from the original sheet
-            console.log("Data was moved to the Matt!");
+            console.log("Data was moved to the Matt Table!");
             return;
             
           } else if (details.valueAfter == "Alaina") {
             alainaTable.rows.add(null, myRow.values); //Adds empty row to bottom of GreenBasket Table, then inserts the changed values into this empty row
             myRow.delete(); //Deletes the changed row from the original sheet
-            console.log("Data was moved to the Alaina!");
+            console.log("Data was moved to the Alaina Table!");
             return;            
           } else if (details.valueAfter == "Berto") {
             bertoTable.rows.add(null, myRow.values); //Adds empty row to bottom of GreenBasket Table, then inserts the changed values into this empty row
             myRow.delete(); //Deletes the changed row from the original sheet
-            console.log("Data was moved to the Berto!");
+            console.log("Data was moved to the Berto Table!");
             return;
           } else if (details.valueAfter == "Bre B.") {
             breBTable.rows.add(null, myRow.values); //Adds empty row to bottom of GreenBasket Table, then inserts the changed values into this empty row
             myRow.delete(); //Deletes the changed row from the original sheet
-            console.log("Data was moved to the Bre B.!");
+            console.log("Data was moved to the Bre B. Table!");
             return;
           } else if (details.valueAfter == "Christian") {
             christianTable.rows.add(null, myRow.values); //Adds empty row to bottom of GreenBasket Table, then inserts the changed values into this empty row
             myRow.delete(); //Deletes the changed row from the original sheet
-            console.log("Data was moved to the Christian!");
+            console.log("Data was moved to the Christian Table!");
             return;
           } else if (details.valueAfter == "Emily") {
             emilyTable.rows.add(null, myRow.values); //Adds empty row to bottom of GreenBasket Table, then inserts the changed values into this empty row
             myRow.delete(); //Deletes the changed row from the original sheet
-            console.log("Data was moved to the Emily!");
+            console.log("Data was moved to the Emily Table!");
             return;
           } else if (details.valueAfter == "Ian") {
             ianTable.rows.add(null, myRow.values); //Adds empty row to bottom of GreenBasket Table, then inserts the changed values into this empty row
             myRow.delete(); //Deletes the changed row from the original sheet
-            console.log("Data was moved to the Ian!");
+            console.log("Data was moved to the Ian Table!");
             return;
           } else if (details.valueAfter == "Jeff") {
             jeffTable.rows.add(null, myRow.values); //Adds empty row to bottom of GreenBasket Table, then inserts the changed values into this empty row
             myRow.delete(); //Deletes the changed row from the original sheet
-            console.log("Data was moved to the Jeff!");
+            console.log("Data was moved to the Jeff Table!");
             return;
           } else if (details.valueAfter == "Josh") {
             joshTable.rows.add(null, myRow.values); //Adds empty row to bottom of GreenBasket Table, then inserts the changed values into this empty row
             myRow.delete(); //Deletes the changed row from the original sheet
-            console.log("Data was moved to the Josh!");
+            console.log("Data was moved to the Josh Table!");
             return;
           } else if (details.valueAfter == "Kristen") {
             kristenTable.rows.add(null, myRow.values); //Adds empty row to bottom of GreenBasket Table, then inserts the changed values into this empty row
             myRow.delete(); //Deletes the changed row from the original sheet
-            console.log("Data was moved to the Kristen!");
+            console.log("Data was moved to the Kristen Table!");
             return;
           } else if (details.valueAfter == "Nichole") {
             nicholeTable.rows.add(null, myRow.values); //Adds empty row to bottom of GreenBasket Table, then inserts the changed values into this empty row
             myRow.delete(); //Deletes the changed row from the original sheet
-            console.log("Data was moved to the Nichole!");
+            console.log("Data was moved to the Nichole Table!");
             return;
           } else if (details.valueAfter == "Luke") {
             lukeTable.rows.add(null, myRow.values); //Adds empty row to bottom of GreenBasket Table, then inserts the changed values into this empty row
             myRow.delete(); //Deletes the changed row from the original sheet
-            console.log("Data was moved to the Luke!");
+            console.log("Data was moved to the Luke Table!");
             return;
           } else if (details.valueAfter == "Lisa") {
             lisaTable.rows.add(null, myRow.values); //Adds empty row to bottom of GreenBasket Table, then inserts the changed values into this empty row
             myRow.delete(); //Deletes the changed row from the original sheet
-            console.log("Data was moved to the Lisa!");
+            console.log("Data was moved to the Lisa Table!");
             return;
           } else if (details.valueAfter == "Luis") {
             luisTable.rows.add(null, myRow.values); //Adds empty row to bottom of GreenBasket Table, then inserts the changed values into this empty row
             myRow.delete(); //Deletes the changed row from the original sheet
-            console.log("Data was moved to the Luis!");
+            console.log("Data was moved to the Luis Table!");
             return;
           } else if (details.valueAfter == "Peter") {
             peterTable.rows.add(null, myRow.values); //Adds empty row to bottom of GreenBasket Table, then inserts the changed values into this empty row
             myRow.delete(); //Deletes the changed row from the original sheet
-            console.log("Data was moved to the Peter!");
+            console.log("Data was moved to the Peter Table!");
             return;
           } else if (details.valueAfter == "Rita") {
             ritaTable.rows.add(null, myRow.values); //Adds empty row to bottom of GreenBasket Table, then inserts the changed values into this empty row
             myRow.delete(); //Deletes the changed row from the original sheet
-            console.log("Data was moved to the Rita!");
+            console.log("Data was moved to the Rita Table!");
             return;
           } else if (details.valueAfter == "Ethan") {
             ethanTable.rows.add(null, myRow.values); //Adds empty row to bottom of GreenBasket Table, then inserts the changed values into this empty row
             myRow.delete(); //Deletes the changed row from the original sheet
-            console.log("Data was moved to the Ethan!");
+            console.log("Data was moved to the Ethan Table!");
             return;
           } else if (details.valueAfter == "Bre Z.") {
             breZTable.rows.add(null, myRow.values); //Adds empty row to bottom of GreenBasket Table, then inserts the changed values into this empty row
             myRow.delete(); //Deletes the changed row from the original sheet
-            console.log("Data was moved to the Bre Z.!");
+            console.log("Data was moved to the Bre Z. Table!");
             return;
           } else if (details.valueAfter == "Joe") {
             joeTable.rows.add(null, myRow.values); //Adds empty row to bottom of GreenBasket Table, then inserts the changed values into this empty row
             myRow.delete(); //Deletes the changed row from the original sheet
-            console.log("Data was moved to the Joe!");
+            console.log("Data was moved to the Joe Table!");
             return;
           } else if (details.valueAfter == "Jordan") {
             jordanTable.rows.add(null, myRow.values); //Adds empty row to bottom of GreenBasket Table, then inserts the changed values into this empty row
             myRow.delete(); //Deletes the changed row from the original sheet
-            console.log("Data was moved to the Jordan!");
+            console.log("Data was moved to the Jordan Table!");
             return;
           } else if (details.valueAfter == "Hazel-Rah") {
             hazelTable.rows.add(null, myRow.values); //Adds empty row to bottom of GreenBasket Table, then inserts the changed values into this empty row
             myRow.delete(); //Deletes the changed row from the original sheet
-            console.log("Data was moved to the Hazel-Rah!");
+            console.log("Data was moved to the Hazel-Rah Table!");
             return;
           } else if (details.valueAfter == "Todd") {
             toddTable.rows.add(null, myRow.values); //Adds empty row to bottom of GreenBasket Table, then inserts the changed values into this empty row
             myRow.delete(); //Deletes the changed row from the original sheet
-            console.log("Data was moved to the Todd!");
+            console.log("Data was moved to the Todd Table!");
             return;
           } else {
             console.log("Looks like there wasn't an Artist change this time. No data was moved...")
@@ -434,26 +438,21 @@ async function tryCatch(callback) {
 }
 //#endregion ---------------------------------------------------------------------------------------------------
 
-// var a = ["Brand New Build", "Special Request"];
-// var b = ["Brand New Build from Other Product Natives", "Brand New Build From Template", "Changes to Exisiting Natives", "Specification Check", "WeTransfer Upload to MS"];
-// var x = "";
+    function lookupStart(input) {
 
-// function lookupStart(input) {
-  
-//     var output;
+      var a = ["Brand New Build", "Special Request"];
+      var b = ["Brand New Build from Other Product Natives", "Brand New Build From Template", "Changes to Exisiting Natives", "Specification Check", "WeTransfer Upload to MS"];
+      
+        var output;
 
-//     if (a.includes(input)) {
-//         output = 4;
-//     } else if(b.includes(input)) {
-//         output = 2;
-//     } else {
-//         output = 24;
-//     }
+        if (a.includes(input)) {
+            output = 4;
+        } else if(b.includes(input)) {
+            output = 2;
+        } else {
+            output = 24;
+        }
+        console.log(output);
 
-//     return output;
-
-// }
-
-
-// var whereIsIt = lookupStart("Brand New Build from Other Product Natives");
-// console.log(whereIsIt);
+        return output;
+      };
