@@ -223,6 +223,12 @@ async function onTableChanged(eventArgs: Excel.TableChangedEventArgs) { //This f
           lookupWork(); //takes prelookupWork variable and divides by 3 if lookupStart was equal to 2. Otherwise remains the same.
           dateAddedSerial(rowValues, changedRow);
           console.log(dateAddedSerialVar);
+          var dateOnly = dateAddedSerialVar|0;
+          console.log(dateOnly);
+          var timeOnly = (dateAddedSerialVar*1000000%1000000)/1000000;
+
+          
+          console.log(timeOnly);
         }
 
 
@@ -523,7 +529,12 @@ function dateAddedSerial(rowValues, changedRow) {
   var dateTime = rowValues[0][9]; //assigns input the cell value in the changed row and the Added column (a nested array of values)
   // JSDateToExcelDate(dateTime);
   dateAddedSerialVar = dateTime
+  console.log(dateTime);
   return dateTime;
+}
+
+function ExcelDateToJSDate(date) {
+  return new Date(Math.round((date - 25569)*86400*1000));
 }
 
 // function JSDateToExcelDate(dateTime) {
