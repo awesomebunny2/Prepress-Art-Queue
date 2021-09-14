@@ -17,10 +17,6 @@ var sortEvent;
 var sortColumn = "Priority";
 var projectTypeColumn = "H";
 var productColumn = "G";
-var x;
-var y;
-var z;
-var dateAddedSerialVar
 //#endregion ----------------------------------------------------------------------------------------------
 
 //#region TASKPANE BUTTONS ---------------------------------------------------------------------------------------
@@ -217,18 +213,19 @@ async function onTableChanged(eventArgs: Excel.TableChangedEventArgs) { //This f
 
         var rowValues = myRow.values;
 
-        if (changedColumn == projectTypeColumn || productColumn) { //if updated data was in Project Type column, run the lookupStart function
-          lookupStart(rowValues, changedRow); //adds hours to turn-around time based on Project Type
-          preLookupWork(rowValues, changedRow); //adds hours based on Product and adds to lookupStart output
-          lookupWork(); //takes prelookupWork variable and divides by 3 if lookupStart was equal to 2. Otherwise remains the same.
-          dateAddedSerial(rowValues, changedRow);
-          console.log(dateAddedSerialVar);
-          var dateOnly = dateAddedSerialVar|0;
-          console.log(dateOnly);
-          var timeOnly = (dateAddedSerialVar*1000000%1000000)/1000000;
 
+        if (changedColumn == projectTypeColumn || productColumn) { //if updated data was in Project Type column, run the lookupStart function
+          var projectTypeHours = lookupStart(rowValues, changedRow); //adds hours to turn-around time based on Project Type
+          var productHours = preLookupWork(rowValues, changedRow, projectTypeHours); //adds hours based on Product and adds to lookupStart output
+          var hoursAdjust = lookupWork(projectTypeHours, productHours); //takes prelookupWork variable and divides by 3 if lookupStart was equal to 2. Otherwise remains the same.
+          var myDate = receivedAdjust(rowValues, changedRow);
+          var override = startPreAdjust(rowValues, changedRow, projectTypeHours, myDate);
           
-          console.log(timeOnly);
+          // console.log(dateAddedSerialVar);
+          // var dateOnly = dateAddedSerialVar|0;
+          // console.log(dateOnly);
+          // var timeOnly = (dateAddedSerialVar*1000000%1000000)/1000000;
+          // console.log(timeOnly);
         }
 
 
@@ -475,12 +472,13 @@ function lookupStart(rowValues, changedRow) { //loads these variables from anoth
   } else { //everything else...
     output = 24; //adds 24 hours
   } console.log(output);
-  x = output; //assigns output to global variable
-  console.log(x);
   return output;
+
+  // var myReturnVal = lookupStart();
+
 };
 
-function preLookupWork(rowValues, changedRow) {
+function preLookupWork(rowValues, changedRow, projectTypeHours) {
   var address = "G" + (changedRow + 2); //takes the row that was updated and locates the address from the Product column.
   console.log("The address of the new Product is " + address);
   var input = rowValues[0][6]; //assigns input the cell value in the changed row and the Product column (a nested array of values)
@@ -508,38 +506,67 @@ function preLookupWork(rowValues, changedRow) {
   } else { //everything else...
     output = 96; //adds 96 hours
   } console.log(output);
-  y = output + x; //adds hours from lookupStart to output and assigns new output to global variable
-  console.log(y);
-  return output;
+  var newOutput = output + projectTypeHours; //adds hours from lookupStart to output and assigns new output to global variable
+  console.log(newOutput);
+  return newOutput;
 };
 
-function lookupWork() {
-  if(x == 2) { //if lookupStart number was 2...
-    z = y / 3; //take the value from prelookupWork and divide it by 3. Assign new vlaue to global variable
-    console.log(z);
+function lookupWork(projectTypeHours, productHours) {
+  var output;
+  if(projectTypeHours == 2) { //if lookupStart number was 2...
+    output = productHours / 3; //take the value from prelookupWork and divide it by 3. Assign new vlaue to global variable
+    console.log(output);
   } else { //otherwise...
-    z = y; //the new global variable is the same as y
-    console.log(z);
+    output = productHours; //the new global variable is the same as y
+    console.log(output);
+    return output;
   }
 }
 
-function dateAddedSerial(rowValues, changedRow) {
+function receivedAdjust(rowValues, changedRow) {
   var address = "J" + (changedRow + 2); //takes the row that was updated and locates the address from the Added column.
   console.log("The address of the new Product is " + address);
   var dateTime = rowValues[0][9]; //assigns input the cell value in the changed row and the Added column (a nested array of values)
-  // JSDateToExcelDate(dateTime);
-  dateAddedSerialVar = dateTime
-  console.log(dateTime);
-  return dateTime;
+  var date = new Date(Math.round((dateTime - 25569)*86400*1000));
+  date.setHours(date.getHours() + 4);
+  console.log(`Date() ::  Convert Excel serial to Date():
+  ${date}`)
+  var h = date.getHours(); // 4
+  var m = date.getMinutes(); // 30
+
+  // Morning
+  if (h < 8) {
+    date.setHours(8);
+    if (m < 30) {
+      date.setMinutes(30);
+    };
+  };
+  // Evening
+  if (h > 17) {
+    date.setDate(date.getDate() + 1);
+    date.setHours(8);
+    if (m < 30) {
+      date.setMinutes(30);
+    };
+  };
+  console.log(date);
+  return date;
 }
 
-function ExcelDateToJSDate(date) {
-  return new Date(Math.round((date - 25569)*86400*1000));
+function startPreAdjust(rowValues, changedRow, projectTypeHours, myDate) {
+  var address = "U" + (changedRow + 2); //takes the row that was updated and locates the address from the Added column.
+  console.log("The address of the Start Override is " + address);
+  var startOverride = rowValues[0][20];
+  console.log(startOverride);
+  var snail = projectTypeHours + startOverride
+  var h = myDate.setHours(myDate.getHours() + snail);
+  var hDate = new Date(Math.round((h - 25569)*86400*1000));
+
+console.log(`Date() ::  Add an Hour:
+${hDate}`)
+  //add snail hours to myDate 
 }
 
-// function JSDateToExcelDate(dateTime) {
 
-//   var returnDateTime = 25569.0 + ((dateTime.getTime() - (dateTime.getTimezoneOffset() * 60 * 1000)) / (1000 * 60 * 60 * 24));
-//   return returnDateTime.toString().substr(0,5);
 
-// }
+
