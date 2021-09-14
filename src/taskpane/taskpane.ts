@@ -217,9 +217,9 @@ async function onTableChanged(eventArgs: Excel.TableChangedEventArgs) { //This f
         var rowValues = myRow.values;
 
         if (changedColumn == projectTypeColumn || productColumn) { //if updated data was in Project Type column, run the lookupStart function
-          lookupStart(rowValues, changedRow); //inserts the new data as the function's input
-          preLookupWork(rowValues, changedRow);
-          lookupWork();
+          lookupStart(rowValues, changedRow); //adds hours to turn-around time based on Project Type
+          preLookupWork(rowValues, changedRow); //adds hours based on Product and adds to lookupStart output
+          lookupWork(); //takes prelookupWork variable and divides by 3 if lookupStart was equal to 2. Otherwise remains the same.
         }
 
 
@@ -449,32 +449,32 @@ async function tryCatch(callback) {
 //#endregion ---------------------------------------------------------------------------------------------------
 
    
-function lookupStart(rowValues, changedRow) {
-  var address = "H" + (changedRow + 2);
+function lookupStart(rowValues, changedRow) { //loads these variables from another function to use in this function
+  var address = "H" + (changedRow + 2); //takes the row that was updated and locates the address from the Project Type column.
   console.log("The address of the new Project Type is " + address);
-  var input = rowValues[0][7];
+  var input = rowValues[0][7]; //assigns input the cell value in the changed row and the Project Type column (a nested array of values)
   console.log(input);
 
   var a = ["Brand New Build", "Special Request"];
   var b = ["Brand New Build from Other Product Natives", "Brand New Build From Template", "Changes to Exisiting Natives", "Specification Check", "WeTransfer Upload to MS"];
   var output;
 
-  if (a.includes(input)) {
-    output = 4;
-  } else if(b.includes(input)) {
-    output = 2;
-  } else {
-    output = 24;
+  if (a.includes(input)) { //if value in column H includes any input from var a...
+    output = 4; //adds 4 hours
+  } else if(b.includes(input)) { //if value in column H includes any input from var b...
+    output = 2; //adds 2 hours
+  } else { //everything else...
+    output = 24; //adds 24 hours
   } console.log(output);
-  x = output;
+  x = output; //assigns output to global variable
   console.log(x);
   return output;
 };
 
 function preLookupWork(rowValues, changedRow) {
-  var address = "G" + (changedRow + 2);
+  var address = "G" + (changedRow + 2); //takes the row that was updated and locates the address from the Product column.
   console.log("The address of the new Product is " + address);
-  var input = rowValues[0][6];
+  var input = rowValues[0][6]; //assigns input the cell value in the changed row and the Product column (a nested array of values)
   console.log(input);
   var a = ["Menu", "Brochure", "Coupon Booklet", "Jumbo Postcard"];
   var b = ["MenuXL", "BrochureXL", "Folded Magnet", "Colossal Postcard", "Large Plastic"];
@@ -484,32 +484,32 @@ function preLookupWork(rowValues, changedRow) {
   var f = ["Medium Plastic"];
   var output;
 
-  if (a.includes(input)) {
-    output = 10;
-  } else if (b.includes(input)) {
-    output = 18;
-  } else if (c.includes(input)) {
-    output = 4;
-  } else if (d.includes(input)) {
-    output = 2;
-  } else if (e.includes(input)) {
-    output = 7;
-  } else if (f.includes(input)) {
-    output = 15;
-  } else {
-    output = 96;
+  if (a.includes(input)) { //if value in column G includes any input from var a...
+    output = 10; //adds 10 hours
+  } else if (b.includes(input)) { //if value in column G includes any input from var b...
+    output = 18; //adds 18 hours
+  } else if (c.includes(input)) { //if value in column G includes any input from var c...
+    output = 4; //adds 4 hours
+  } else if (d.includes(input)) { //if value in column G includes any input from var d...
+    output = 2; //adds 2 hours
+  } else if (e.includes(input)) { //if value in column G includes any input from var e...
+    output = 7; //adds 7 hours
+  } else if (f.includes(input)) { //if value in column G includes any input from var f...
+    output = 15; //adds 15 hours
+  } else { //everything else...
+    output = 96; //adds 96 hours
   } console.log(output);
-  y = output + x;
+  y = output + x; //adds hours from lookupStart to output and assigns new output to global variable
   console.log(y);
   // return output;
 };
 
 function lookupWork() {
-  if(x == 2) {
-    z = y / 3;
+  if(x == 2) { //if lookupStart number was 2...
+    z = y / 3; //take the value from prelookupWork and divide it by 3. Assign new vlaue to global variable
     console.log(z);
-  } else {
-    z = y;
+  } else { //otherwise...
+    z = y; //the new global variable is the same as y
     console.log(z);
   }
 }
