@@ -20,6 +20,7 @@ var productColumn = "G";
 var x;
 var y;
 var z;
+var dateTime
 //#endregion ----------------------------------------------------------------------------------------------
 
 //#region TASKPANE BUTTONS ---------------------------------------------------------------------------------------
@@ -220,6 +221,7 @@ async function onTableChanged(eventArgs: Excel.TableChangedEventArgs) { //This f
           lookupStart(rowValues, changedRow); //adds hours to turn-around time based on Project Type
           preLookupWork(rowValues, changedRow); //adds hours based on Product and adds to lookupStart output
           lookupWork(); //takes prelookupWork variable and divides by 3 if lookupStart was equal to 2. Otherwise remains the same.
+          dateAddedSerial(rowValues, changedRow);
         }
 
 
@@ -512,4 +514,19 @@ function lookupWork() {
     z = y; //the new global variable is the same as y
     console.log(z);
   }
+}
+
+function dateAddedSerial(rowValues, changedRow) {
+  var address = "J" + (changedRow + 2); //takes the row that was updated and locates the address from the Added column.
+  console.log("The address of the new Product is " + address);
+  var input = rowValues[0][9]; //assigns input the cell value in the changed row and the Added column (a nested array of values)
+  JSDateToExcelDate(input);
+  console.log(input);
+}
+
+function JSDateToExcelDate(dateTime) {
+
+  var returnDateTime = 25569.0 + ((dateTime.getTime() - (dateTime.getTimezoneOffset() * 60 * 1000)) / (1000 * 60 * 60 * 24));
+  return returnDateTime.toString().substr(0,5);
+
 }
