@@ -559,12 +559,10 @@ function startPreAdjust(rowValues, changedRow, projectTypeHours, myDate) {
   var startOverride = rowValues[0][20];
   console.log(startOverride);
   var snail = projectTypeHours + startOverride
-  var h = myDate.setHours(myDate.getHours() + snail);
-  var hDate = new Date(Math.round((h - 25569)*86400*1000));
-
-console.log(`Date() ::  Add an Hour:
-${hDate}`)
-  //add snail hours to myDate 
+  var snailDate = myDate;
+  snailDate.setHours(myDate.getHours() + snail);
+  console.log(snailDate);
+  return snailDate;
 }
 
 
