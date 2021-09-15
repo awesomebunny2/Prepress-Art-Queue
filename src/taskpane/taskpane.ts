@@ -217,10 +217,10 @@ async function onTableChanged(eventArgs: Excel.TableChangedEventArgs) { //This f
         if (changedColumn == projectTypeColumn || productColumn) { //if updated data was in Project Type column, run the lookupStart function
           var projectTypeHours = lookupStart(rowValues, changedRow); //adds hours to turn-around time based on Project Type
           var productHours = preLookupWork(rowValues, changedRow, projectTypeHours); //adds hours based on Product and adds to lookupStart output
-          var hoursAdjust = lookupWork(projectTypeHours, productHours); //takes prelookupWork variable and divides by 3 if lookupStart was equal to 2. Otherwise remains the same.
-          var myDate = receivedAdjust(rowValues, changedRow);
-          var override = startPreAdjust(rowValues, changedRow, projectTypeHours, myDate);
-          var preWeekendHours = startPreWeekendAdjust(override);
+          var workHoursAdjust = lookupWork(projectTypeHours, productHours); //takes prelookupWork variable and divides by 3 if lookupStart was equal to 2. Otherwise remains the same.
+          var myDate = receivedAdjust(rowValues, changedRow); //adjusts start time to be within office hours
+          var override = startPreAdjust(rowValues, changedRow, projectTypeHours, myDate); //adds manual override start hours to adjusted start time
+          var weekendHoursAdjust = startPreWeekendAdjust(override); //adjusts override start date to be on a weekday, in the off chance it was submitted over the weekend
           
           // console.log(dateAddedSerialVar);
           // var dateOnly = dateAddedSerialVar|0;
@@ -532,25 +532,8 @@ function receivedAdjust(rowValues, changedRow) {
   date.setHours(date.getHours() + 4);
   console.log(`Date() ::  Convert Excel serial to Date():
   ${date}`)
-  var h = date.getHours(); // 4
-  var m = date.getMinutes(); // 30
 
-  // Morning
-  if (h < 8) {
-    date.setHours(8);
-    if (m < 30) {
-      date.setMinutes(30);
-    };
-  };
-  // Evening
-  if (h > 17) {
-    date.setDate(date.getDate() + 1);
-    date.setHours(8);
-    if (m < 30) {
-      date.setMinutes(30);
-    };
-  };
-  console.log(date);
+  date = officeHours(date);
   return date;
 }
 
@@ -559,11 +542,11 @@ function startPreAdjust(rowValues, changedRow, projectTypeHours, myDate) {
   console.log("The address of the Start Override is " + address);
   var startOverride = rowValues[0][20];
   console.log(startOverride);
-  var snail = projectTypeHours + startOverride
-  var snailFail = myDate;
-  var snailDate = snailFail.setHours(snailFail.getHours() + snail);;
-  console.log(snailDate);
-  return snailDate;
+  var snail = projectTypeHours + startOverride; // 26
+  var snailFail = new Date(myDate);
+  snailFail.setHours(snailFail.getHours() + snail);;
+  console.log(snailFail);
+  return snailFail;
 }
 
 function startPreWeekendAdjust(override) {
@@ -571,14 +554,69 @@ function startPreWeekendAdjust(override) {
   console.log(dayOfWeek);
 
   if (dayOfWeek == 0) {
-    var output = override.setDate(override.getDate() + 1);
-    var date = new Date(Math.round((output - 25569)*86400*1000));
-    date.setHours(date.getHours() + 4);
-    console.log(output);
+    var newDate = new Date(override);
+
+    newDate.setDate(newDate.getDate() + 1);
+    newDate.setHours(8);
+    newDate.setMinutes(30);
+    console.log(newDate);
+
+
+  }
+
+  if (dayOfWeek == 6) {
+    var newDate = new Date(override);
+
+    newDate.setDate(newDate.getDate() + 2);
+    newDate.setHours(8);
+    newDate.setMinutes(30);
+    console.log(newDate);
   }
 
 }
 
-//if date = sat, add 2 days. Then change time to 8:30am
+var anotherDate = new Date();
 
-//if date = sun, add 1 day. Then change time to 8:30am
+
+
+/**
+ * Adjusts a date object so that it falls into office hours
+ * @param {Date} date Date to be adjusted to the start of office hours
+ * @returns Date
+ */
+function officeHours(date) {
+  var h = date.getHours(); // 4
+    var m = date.getMinutes(); // 30
+
+    // Morning
+    if (h < 8) {
+      date.setHours(8);
+      if (m < 30) {
+        date.setMinutes(30);
+      };
+    };
+    // Evening
+    if (h > 17) {
+      date.setDate(date.getDate() + 1);
+      date.setHours(8);
+      if (m < 30) {
+        date.setMinutes(30);
+      };
+    };
+    console.log(date);
+    return date;
+};
+
+
+/**
+ * Accepts a string, a number and an array and returns everything together
+ * @param {String} aString Here is where I would explain the purpose of aString
+ * @param {Number} aNumber Here is where I say why a number
+ * @param {Array} anArray Here is where I say what an array
+ * @returns String
+ */
+function inAndOutBurger(aString, aNumber, anArray) {
+
+
+  var combination = aString + aNumber + anArray;
+}
