@@ -220,6 +220,7 @@ async function onTableChanged(eventArgs: Excel.TableChangedEventArgs) { //This f
           var hoursAdjust = lookupWork(projectTypeHours, productHours); //takes prelookupWork variable and divides by 3 if lookupStart was equal to 2. Otherwise remains the same.
           var myDate = receivedAdjust(rowValues, changedRow);
           var override = startPreAdjust(rowValues, changedRow, projectTypeHours, myDate);
+          var preWeekendHours = startPreWeekendAdjust(override);
           
           // console.log(dateAddedSerialVar);
           // var dateOnly = dateAddedSerialVar|0;
@@ -559,12 +560,25 @@ function startPreAdjust(rowValues, changedRow, projectTypeHours, myDate) {
   var startOverride = rowValues[0][20];
   console.log(startOverride);
   var snail = projectTypeHours + startOverride
-  var snailDate = myDate;
-  snailDate.setHours(myDate.getHours() + snail);
+  var snailFail = myDate;
+  var snailDate = snailFail.setHours(snailFail.getHours() + snail);;
   console.log(snailDate);
   return snailDate;
 }
 
+function startPreWeekendAdjust(override) {
+  var dayOfWeek = override.getDay();
+  console.log(dayOfWeek);
 
+  if (dayOfWeek == 0) {
+    var output = override.setDate(override.getDate() + 1);
+    var date = new Date(Math.round((output - 25569)*86400*1000));
+    date.setHours(date.getHours() + 4);
+    console.log(output);
+  }
 
+}
 
+//if date = sat, add 2 days. Then change time to 8:30am
+
+//if date = sun, add 1 day. Then change time to 8:30am
