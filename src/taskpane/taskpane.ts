@@ -455,7 +455,12 @@ async function tryCatch(callback) {
 }
 //#endregion ---------------------------------------------------------------------------------------------------
 
-   
+/**
+ * Finds the value of Project Type in the changed row and returns a number of hours depending on the project type
+ * @param {Array} rowValues loads the values of the changed row
+ * @param {Number} changedRow loads the row number of the changed row
+ * @returns A Number
+ */   
 function lookupStart(rowValues, changedRow) { //loads these variables from another function to use in this function
   var address = "H" + (changedRow + 2); //takes the row that was updated and locates the address from the Project Type column.
   console.log("The address of the new Project Type is " + address);
@@ -479,6 +484,13 @@ function lookupStart(rowValues, changedRow) { //loads these variables from anoth
 
 };
 
+/**
+ * Finds the value of Product in the changed row, returns a number of hours based on the product, and adds this number to projectTypeHours
+ * @param rowValues loads the values of the changed row
+ * @param changedRow loads the row number of the changed row
+ * @param projectTypeHours lookupStart returned number
+ * @returns A Number
+ */
 function preLookupWork(rowValues, changedRow, projectTypeHours) {
   var address = "G" + (changedRow + 2); //takes the row that was updated and locates the address from the Product column.
   console.log("The address of the new Product is " + address);
@@ -512,6 +524,12 @@ function preLookupWork(rowValues, changedRow, projectTypeHours) {
   return newOutput;
 };
 
+/**
+ * if lookupStart number is 2, divide the prLookupWork number by 3. Otherwise, returns preLookupWork number
+ * @param projectTypeHours lookupStart returned number
+ * @param productHours preLookupWork returned number
+ * @returns A Number
+ */
 function lookupWork(projectTypeHours, productHours) {
   var output;
   if(projectTypeHours == 2) { //if lookupStart number was 2...
@@ -524,12 +542,20 @@ function lookupWork(projectTypeHours, productHours) {
   }
 }
 
+/**
+ * Finds the value of Date Added in the changed row and converts it to be within office hours based on the officeHours function
+ * @param rowValues loads the values of the changed row
+ * @param changedRow loads the row number of the changed row
+ * @returns Date
+ */
 function receivedAdjust(rowValues, changedRow) {
   var address = "J" + (changedRow + 2); //takes the row that was updated and locates the address from the Added column.
   console.log("The address of the new Product is " + address);
   var dateTime = rowValues[0][9]; //assigns input the cell value in the changed row and the Added column (a nested array of values)
-  var date = new Date(Math.round((dateTime - 25569)*86400*1000));
-  date.setHours(date.getHours() + 4);
+
+  //the below code basically is just converting the serial number in dateTime to a date object, and then adjusting to read in EST.
+  var date = new Date(Math.round((dateTime - 25569)*86400*1000)); //convert serial number to date object
+  date.setHours(date.getHours() + 4); //adjusting from GMT to EST (adds 4 hours)
   console.log(`Date() ::  Convert Excel serial to Date():
   ${date}`)
 
@@ -537,6 +563,14 @@ function receivedAdjust(rowValues, changedRow) {
   return date;
 }
 
+/**
+ * Finds the value of Start Override in the changed row and adds it to projectTypeHours, then adds that new number as hours to myDate
+ * @param rowValues loads the values of the changed row
+ * @param changedRow loads the row number of the changed row
+ * @param projectTypeHours lookupStart returned number
+ * @param myDate receivedAdjust returned date
+ * @returns Date
+ */
 function startPreAdjust(rowValues, changedRow, projectTypeHours, myDate) {
   var address = "U" + (changedRow + 2); //takes the row that was updated and locates the address from the Added column.
   console.log("The address of the Start Override is " + address);
@@ -549,6 +583,11 @@ function startPreAdjust(rowValues, changedRow, projectTypeHours, myDate) {
   return snailFail;
 }
 
+/**
+ * Finds the day of the week from override and if it is a weekend, changes it to be Monday at 8:30am
+ * @param override startPreAdjust returned date
+ * @returns Date
+ */
 function startPreWeekendAdjust(override) {
   var dayOfWeek = override.getDay();
   console.log(dayOfWeek);
@@ -560,8 +599,7 @@ function startPreWeekendAdjust(override) {
     newDate.setHours(8);
     newDate.setMinutes(30);
     console.log(newDate);
-
-
+    return newDate;
   }
 
   if (dayOfWeek == 6) {
@@ -571,11 +609,11 @@ function startPreWeekendAdjust(override) {
     newDate.setHours(8);
     newDate.setMinutes(30);
     console.log(newDate);
+    return newDate;
   }
 
 }
 
-var anotherDate = new Date();
 
 
 
@@ -606,17 +644,3 @@ function officeHours(date) {
     console.log(date);
     return date;
 };
-
-
-/**
- * Accepts a string, a number and an array and returns everything together
- * @param {String} aString Here is where I would explain the purpose of aString
- * @param {Number} aNumber Here is where I say why a number
- * @param {Array} anArray Here is where I say what an array
- * @returns String
- */
-function inAndOutBurger(aString, aNumber, anArray) {
-
-
-  var combination = aString + aNumber + anArray;
-}
