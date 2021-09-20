@@ -481,222 +481,247 @@ async function tryCatch(callback) {
 }
 //#endregion ---------------------------------------------------------------------------------------------------
 
-/**
- * Finds the value of Project Type in the changed row and returns a number of hours depending on the project type
- * @param {Array} rowValues loads the values of the changed row
- * @param {Number} changedRow loads the row number of the changed row
- * @returns A Number
- */   
-function lookupStart(rowValues, changedRow) { //loads these variables from another function to use in this function
-  var address = "H" + (changedRow + 2); //takes the row that was updated and locates the address from the Project Type column.
-  // console.log("The address of the new Project Type is " + address);
-  var input = rowValues[0][7]; //assigns input the cell value in the changed row and the Project Type column (a nested array of values)
-  // console.log(input);
-
-  var a = ["Brand New Build", "Special Request"];
-  var b = ["Brand New Build from Other Product Natives", "Brand New Build From Template", "Changes to Exisiting Natives", "Specification Check", "WeTransfer Upload to MS"];
-  var output;
-
-  if (a.includes(input)) { //if value in column H includes any input from var a...
-    output = 4; //adds 4 hours
-  } else if(b.includes(input)) { //if value in column H includes any input from var b...
-    output = 2; //adds 2 hours
-  } else { //everything else...
-    output = 24; //adds 24 hours
-  }
-  return output;
-
-  // var myReturnVal = lookupStart();
-
-};
-
-/**
- * Finds the value of Product in the changed row, returns a number of hours based on the product, and adds this number to projectTypeHours
- * @param {Array} rowValues loads the values of the changed row
- * @param {Number} changedRow loads the row number of the changed row
- * @param {Number} projectTypeHours lookupStart returned number
- * @returns A Number
- */
-function preLookupWork(rowValues, changedRow, projectTypeHours) {
-  var address = "G" + (changedRow + 2); //takes the row that was updated and locates the address from the Product column.
-  // console.log("The address of the new Product is " + address);
-  var input = rowValues[0][6]; //assigns input the cell value in the changed row and the Product column (a nested array of values)
-  // console.log(input);
-  var a = ["Menu", "Brochure", "Coupon Booklet", "Jumbo Postcard"];
-  var b = ["MenuXL", "BrochureXL", "Folded Magnet", "Colossal Postcard", "Large Plastic"];
-  var c = ["Small Menu", "Small Brochure", "Flyer", "Letter", "Envelope Mailer", "Postcard", "Magnet", "Door Hanger", "New Mover", "Birthday??", "Logo Creation"];
-  var d = ["2SBT", "Box Topper", "Logo Recreation", "Business Cards"];
-  var e = ["Scratch-Off Postcard", "Peel-A-Box Postcard", "Small Plastic", "Plastic New Mover", "Wide Format", "Artwork Only"];
-  var f = ["Medium Plastic"];
-  var output;
-
-  if (a.includes(input)) { //if value in column G includes any input from var a...
-    output = 10; //adds 10 hours
-  } else if (b.includes(input)) { //if value in column G includes any input from var b...
-    output = 18; //adds 18 hours
-  } else if (c.includes(input)) { //if value in column G includes any input from var c...
-    output = 4; //adds 4 hours
-  } else if (d.includes(input)) { //if value in column G includes any input from var d...
-    output = 2; //adds 2 hours
-  } else if (e.includes(input)) { //if value in column G includes any input from var e...
-    output = 7; //adds 7 hours
-  } else if (f.includes(input)) { //if value in column G includes any input from var f...
-    output = 15; //adds 15 hours
-  } else { //everything else...
-    output = 96; //adds 96 hours
-  } //console.log(output);
-  var newOutput = output + projectTypeHours; //adds hours from lookupStart to output and assigns new output to global variable
-  // console.log(newOutput);
-  return newOutput;
-};
-
-/**
- * if lookupStart number is 2, divide the preLookupWork number by 3. Otherwise, returns preLookupWork number
- * @param projectTypeHours lookupStart returned number
- * @param productHours preLookupWork returned number
- * @returns A Number
- */
-function lookupWork(projectTypeHours, productHours) {
-  if(projectTypeHours == 2) { //if lookupStart number was 2...
-    return (productHours / 3) //returns the productHours number divided by 3
-  }
-  return productHours; //otherwise returns the productHours number unaltered
-}
-
-/**
- * Finds the value of Date Added in the changed row and converts it to be within office hours based on the officeHours function
- * @param rowValues loads the values of the changed row
- * @param changedRow loads the row number of the changed row
- * @returns Date
- */
-function receivedAdjust(rowValues, changedRow) {
-  var address = "J" + (changedRow + 2); //takes the row that was updated and locates the address from the Added column.
-  // console.log("The address of the new Product is " + address);
-  var dateTime = rowValues[0][9]; //assigns input the cell value in the changed row and the Added column (a nested array of values)
-
-  //the below code basically is just converting the serial number in dateTime to a date object, and then adjusting to read in EST.
-  var date = new Date(Math.round((dateTime - 25569)*86400*1000)); //convert serial number to date object
-  date.setHours(date.getHours() + 4); //adjusting from GMT to EST (adds 4 hours)
-  // console.log(`Date() ::  Convert Excel serial to Date():
-  // ${date}`)
-
-  date = officeHours(date); //converts to be within office hours if it already isn't
-  return date;
-}
 
 
 
+//#region AUTOFILL FUNCTIONS -------------------------------------------------------------------------------------
 
-/**
- * Finds the value of Start Override in the changed row and adds it to projectTypeHours, then adds that new number as hours to myDate
- * @param {Array} rowValues loads the values of the changed row
- * @param {Number} changedRow loads the row number of the changed row
- * @param {Number} projectTypeHours lookupStart returned number
- * @param {Date} myDate receivedAdjust returned date
- * @return {Date}
- */
+  //#region PROJECT TYPE HOURS -----------------------------------------------------------------------------------
+  /**
+   * Finds the value of Project Type in the changed row and returns a number of hours depending on the project type
+   * @param {Array} rowValues loads the values of the changed row
+   * @param {Number} changedRow loads the row number of the changed row
+   * @returns A Number
+   */   
+  function lookupStart(rowValues, changedRow) { //loads these variables from another function to use in this function
+    var address = "H" + (changedRow + 2); //takes the row that was updated and locates the address from the Project Type column.
+    // console.log("The address of the new Project Type is " + address);
+    var input = rowValues[0][7]; //assigns input the cell value in the changed row and the Project Type column (a nested array of values)
+    // console.log(input);
 
-function startPreAdjust(rowValues, changedRow, projectTypeHours, myDate) {
-  var address = "U" + (changedRow + 2); //takes the row that was updated and locates the address from the Added column.
-  // console.log("The address of the Start Override is " + address);
-  var startOverride = rowValues[0][20]; //gets values of Start Orverride cell
-  // console.log(startOverride);
-  var snail = projectTypeHours + startOverride; //adds start override value to the number of hours for the project type
-  var snailFail = new Date(myDate);
-  snailFail.setHours(snailFail.getHours() + snail);; //adds snail hours to myDate
-  // console.log(snailFail);
-  return snailFail;
-}
+    var a = ["Brand New Build", "Special Request"];
+    var b = ["Brand New Build from Other Product Natives", "Brand New Build From Template", "Changes to Exisiting Natives", "Specification Check", "WeTransfer Upload to MS"];
+    var output;
 
-/**
- * Finds the day of the week from override and if it is a weekend, changes it to be Monday at 8:30am
- * @param override startPreAdjust returned date
- * @returns Date
- */
-function startPreWeekendAdjust(override) {
-  var dayOfWeek = override.getDay(); //get day of week from startPreAdjust returned date
-
-  if (dayOfWeek == 0) { //if weekday = Sunday, add one day and set time to 8:30am
-    var newDate = new Date(override);
-
-    newDate.setDate(newDate.getDate() + 1);
-    newDate.setHours(8);
-    newDate.setMinutes(30);
-    // console.log(newDate);
-    return newDate;
-  }
-
-  if (dayOfWeek == 6) { //if weekday = Saturday, add 2 days and set time to 8:30am
-    var newDate = new Date(override);
-
-    newDate.setDate(newDate.getDate() + 2);
-    newDate.setHours(8);
-    newDate.setMinutes(30);
-    // console.log(newDate);
-    return newDate;
-  } else { //if not a weekend, use date from startPreAdjust
-    return override;
-  }
-
-}
-/**
- * Prints the value of weekendHoursAdjust to the Picked Up / Started By column and formats the date in a readible format
- * @param {Array} rowValues loads the values of the changed row
- * @param {Number} changedRow loads the row number of the changed row
- * @param {Object} sheet the active worksheet
- * @param {Date} weekendHoursAdjust date adjusted to not land on a weekend
- * @returns date
- */
-function startedBy(rowValues, changedRow, sheet, weekendHoursAdjust) { //loads these variables from another function to use in this function
-  var address = "M" + (changedRow + 2); //takes the row that was updated and locates the address from the Picked Up / Started By column.
-  var range = sheet.getRange(address); //assigns the cell from the address variable to range
-  console.log(range);
-
-  var formatDate = weekendHoursAdjust.toLocaleDateString("en-us", { //formats the date to display correctly
-      weekday:'short',
-      month:'numeric',
-      day: 'numeric',
-      year: '2-digit'
-  });
-
-  var formatTime = weekendHoursAdjust.toLocaleTimeString("en-us", { //formats the time to display correctly
-    hour: '2-digit',
-    minute:'2-digit'
-  });
-
-  var squeekday = formatDate + " " + formatTime; //adds the correctly displayed date and time together
-
-  range.values = [[squeekday]]; //assigns the returned date value to the cell
-
-  return range.values; //commits changes and exits the function
-};
-
-
-
-
-/**
- * Adjusts a date object so that it falls into office hours
- * @param {Date} date Date to be adjusted to the start of office hours
- * @returns Date
- */
-function officeHours(date) {
-  var h = date.getHours(); // 4
-    var m = date.getMinutes(); // 30
-
-    // Morning
-    if (h < 8) { //if hours is before 8, set hours to 8 and minutes to 30.
-      date.setHours(8);
-      date.setMinutes(30);
+    if (a.includes(input)) { //if value in column H includes any input from var a...
+      output = 4; //adds 4 hours
+    } else if(b.includes(input)) { //if value in column H includes any input from var b...
+      output = 2; //adds 2 hours
+    } else { //everything else...
+      output = 24; //adds 24 hours
     }
-    if (h == 8 && m < 30) { //if hours is 8 and minutes is before 30, set minutes to 30.
-      date.setMinutes(30);
+    return output;
+  };
+  //#endregion ---------------------------------------------------------------------------------------------------
+
+
+  //#region PICKED UP / STARTED BY -------------------------------------------------------------------------------
+
+    //#region MY DATE ----------------------------------------------------------------------------------------------
+    /**
+     * Finds the value of Date Added in the changed row and converts it to be within office hours based on the officeHours function
+     * @param rowValues loads the values of the changed row
+     * @param changedRow loads the row number of the changed row
+     * @returns Date
+     */
+    function receivedAdjust(rowValues, changedRow) {
+      var address = "J" + (changedRow + 2); //takes the row that was updated and locates the address from the Added column.
+      // console.log("The address of the new Product is " + address);
+      var dateTime = rowValues[0][9]; //assigns input the cell value in the changed row and the Added column (a nested array of values)
+
+      //the below code basically is just converting the serial number in dateTime to a date object, and then adjusting to read in EST.
+      var date = new Date(Math.round((dateTime - 25569)*86400*1000)); //convert serial number to date object
+      date.setHours(date.getHours() + 4); //adjusting from GMT to EST (adds 4 hours)
+      // console.log(`Date() ::  Convert Excel serial to Date():
+      // ${date}`)
+
+      date = officeHours(date); //converts to be within office hours if it already isn't
+      return date;
     };
-    // Evening
-    if (h > 17 || (h == 17 && m > 30)) { //if hours is greater than 17 (5:00pm) OR if hours is 17 and minutes are greater than 30, add 1 one day, set hours to 8, and set minutes to 30.
-      date.setDate(date.getDate() + 1);
-      date.setHours(8);
-      date.setMinutes(30);
+    //#endregion ---------------------------------------------------------------------------------------------------
+
+    //#region OVERRIDE ---------------------------------------------------------------------------------------------
+    /**
+     * Finds the value of Start Override in the changed row and adds it to projectTypeHours, then adds that new number as hours to myDate
+     * @param {Array} rowValues loads the values of the changed row
+     * @param {Number} changedRow loads the row number of the changed row
+     * @param {Number} projectTypeHours lookupStart returned number
+     * @param {Date} myDate receivedAdjust returned date
+     * @return {Date}
+     */
+
+    function startPreAdjust(rowValues, changedRow, projectTypeHours, myDate) {
+      var address = "U" + (changedRow + 2); //takes the row that was updated and locates the address from the Added column.
+      // console.log("The address of the Start Override is " + address);
+      var startOverride = rowValues[0][20]; //gets values of Start Orverride cell
+      // console.log(startOverride);
+      var snail = projectTypeHours + startOverride; //adds start override value to the number of hours for the project type
+      var snailFail = new Date(myDate);
+      snailFail.setHours(snailFail.getHours() + snail);; //adds snail hours to myDate
+      // console.log(snailFail);
+      return snailFail;
+    }
+    //#endregion ----------------------------------------------------------------------------------------------------
+
+    //#region WEEKEND HOURS ADJUST ---------------------------------------------------------------------------------
+    /**
+     * Finds the day of the week from override and if it is a weekend, changes it to be Monday at 8:30am
+     * @param override startPreAdjust returned date
+     * @returns Date
+     */
+    function startPreWeekendAdjust(override) {
+      var dayOfWeek = override.getDay(); //get day of week from startPreAdjust returned date
+
+      if (dayOfWeek == 0) { //if weekday = Sunday, add one day and set time to 8:30am
+        var newDate = new Date(override);
+
+        newDate.setDate(newDate.getDate() + 1);
+        newDate.setHours(8);
+        newDate.setMinutes(30);
+        // console.log(newDate);
+        return newDate;
+      }
+
+      if (dayOfWeek == 6) { //if weekday = Saturday, add 2 days and set time to 8:30am
+        var newDate = new Date(override);
+
+        newDate.setDate(newDate.getDate() + 2);
+        newDate.setHours(8);
+        newDate.setMinutes(30);
+        // console.log(newDate);
+        return newDate;
+      } else { //if not a weekend, use date from startPreAdjust
+        return override;
+      }
+    }
+    //#endregion ------------------------------------------------------------------------------------------------------
+
+    //#region STARTED PICKED UP BY ---------------------------------------------------------------------------------
+    /**
+     * Prints the value of weekendHoursAdjust to the Picked Up / Started By column and formats the date in a readible format
+     * @param {Array} rowValues loads the values of the changed row
+     * @param {Number} changedRow loads the row number of the changed row
+     * @param {Object} sheet the active worksheet
+     * @param {Date} weekendHoursAdjust date adjusted to not land on a weekend
+     * @returns date
+     */
+    function startedBy(rowValues, changedRow, sheet, weekendHoursAdjust) { //loads these variables from another function to use in this function
+      var address = "M" + (changedRow + 2); //takes the row that was updated and locates the address from the Picked Up / Started By column.
+      var range = sheet.getRange(address); //assigns the cell from the address variable to range
+      console.log(range);
+
+      var formatDate = weekendHoursAdjust.toLocaleDateString("en-us", { //formats the date to display correctly
+          weekday:'short',
+          month:'numeric',
+          day: 'numeric',
+          year: '2-digit'
+      });
+
+      var formatTime = weekendHoursAdjust.toLocaleTimeString("en-us", { //formats the time to display correctly
+        hour: '2-digit',
+        minute:'2-digit'
+      });
+
+      var squeekday = formatDate + " " + formatTime; //adds the correctly displayed date and time together
+
+      range.values = [[squeekday]]; //assigns the returned date value to the cell
+
+      return range.values; //commits changes and exits the function
     };
-    // console.log(date);
-    return date;
-};
+    //#endregion ----------------------------------------------------------------------------------------------------
+
+  //#endregion ------------------------------------------------------------------------------------------------------
+
+
+  //#region PROOF TO CLIENT --------------------------------------------------------------------------------------
+
+    //#region PRODUCT HOURS ----------------------------------------------------------------------------------------
+    /**
+     * Finds the value of Product in the changed row, returns a number of hours based on the product, and adds this number to projectTypeHours
+     * @param {Array} rowValues loads the values of the changed row
+     * @param {Number} changedRow loads the row number of the changed row
+     * @param {Number} projectTypeHours lookupStart returned number
+     * @returns A Number
+     */
+    function preLookupWork(rowValues, changedRow, projectTypeHours) {
+      var address = "G" + (changedRow + 2); //takes the row that was updated and locates the address from the Product column.
+      // console.log("The address of the new Product is " + address);
+      var input = rowValues[0][6]; //assigns input the cell value in the changed row and the Product column (a nested array of values)
+      // console.log(input);
+      var a = ["Menu", "Brochure", "Coupon Booklet", "Jumbo Postcard"];
+      var b = ["MenuXL", "BrochureXL", "Folded Magnet", "Colossal Postcard", "Large Plastic"];
+      var c = ["Small Menu", "Small Brochure", "Flyer", "Letter", "Envelope Mailer", "Postcard", "Magnet", "Door Hanger", "New Mover", "Birthday??", "Logo Creation"];
+      var d = ["2SBT", "Box Topper", "Logo Recreation", "Business Cards"];
+      var e = ["Scratch-Off Postcard", "Peel-A-Box Postcard", "Small Plastic", "Plastic New Mover", "Wide Format", "Artwork Only"];
+      var f = ["Medium Plastic"];
+      var output;
+
+      if (a.includes(input)) { //if value in column G includes any input from var a...
+        output = 10; //adds 10 hours
+      } else if (b.includes(input)) { //if value in column G includes any input from var b...
+        output = 18; //adds 18 hours
+      } else if (c.includes(input)) { //if value in column G includes any input from var c...
+        output = 4; //adds 4 hours
+      } else if (d.includes(input)) { //if value in column G includes any input from var d...
+        output = 2; //adds 2 hours
+      } else if (e.includes(input)) { //if value in column G includes any input from var e...
+        output = 7; //adds 7 hours
+      } else if (f.includes(input)) { //if value in column G includes any input from var f...
+        output = 15; //adds 15 hours
+      } else { //everything else...
+        output = 96; //adds 96 hours
+      } //console.log(output);
+      var newOutput = output + projectTypeHours; //adds hours from lookupStart to output and assigns new output to global variable
+      // console.log(newOutput);
+      return newOutput;
+    };
+    //#endregion --------------------------------------------------------------------------------------------------
+
+    //#region WORK HOURS ADJUST ------------------------------------------------------------------------------------
+    /**
+     * if lookupStart number is 2, divide the preLookupWork number by 3. Otherwise, returns preLookupWork number
+     * @param projectTypeHours lookupStart returned number
+     * @param productHours preLookupWork returned number
+     * @returns A Number
+     */
+    function lookupWork(projectTypeHours, productHours) {
+      if(projectTypeHours == 2) { //if lookupStart number was 2...
+        return (productHours / 3) //returns the productHours number divided by 3
+      }
+      return productHours; //otherwise returns the productHours number unaltered
+    }
+    //#endregion ---------------------------------------------------------------------------------------------------
+
+  //#endregion ---------------------------------------------------------------------------------------------------
+
+
+  //#region OFFICE HOURS ---------------------------------------------------------------------------------------
+  /**
+   * Adjusts a date object so that it falls into office hours
+   * @param {Date} date Date to be adjusted to the start of office hours
+   * @returns Date
+   */
+  function officeHours(date) {
+    var h = date.getHours(); // 4
+      var m = date.getMinutes(); // 30
+
+      // Morning
+      if (h < 8) { //if hours is before 8, set hours to 8 and minutes to 30.
+        date.setHours(8);
+        date.setMinutes(30);
+      }
+      if (h == 8 && m < 30) { //if hours is 8 and minutes is before 30, set minutes to 30.
+        date.setMinutes(30);
+      };
+      // Evening
+      if (h > 17 || (h == 17 && m > 30)) { //if hours is greater than 17 (5:00pm) OR if hours is 17 and minutes are greater than 30, add 1 one day, set hours to 8, and set minutes to 30.
+        date.setDate(date.getDate() + 1);
+        date.setHours(8);
+        date.setMinutes(30);
+      };
+      // console.log(date);
+      return date;
+  };
+  //#endregion --------------------------------------------------------------------------------------------------
+
+//#endregion -----------------------------------------------------------------------------------------------------
