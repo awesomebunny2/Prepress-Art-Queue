@@ -50,7 +50,6 @@ $("#set-behavior").on("change", function() {
 
 //#region STARTUP BEHAVIOR --------------------------------------------------------------------------------------
 Office.onReady((info) => {
-  console.log("Ready!");
   // Load on Startup
   // setStartupBehavior is **document level**
   var currentBehavior = Office.addin.getStartupBehavior().then(function(returned) {
@@ -74,7 +73,7 @@ Office.onReady((info) => {
         // sortEvent = context.workbook.tables.onChanged.add(sortDate);
 
         return context.sync().then(function() { //Commits changes to document and then returns the console.log
-          console.log("Event handlers have been successfully registered");
+          // console.log("Event handlers have been successfully registered");
         });
       });
     };
@@ -83,11 +82,13 @@ Office.onReady((info) => {
 
 //#region MOVES DATA BETWEEN WORKSHEETS ------------------------------------------------------------------------
 async function onTableChanged(eventArgs: Excel.TableChangedEventArgs) { //This function will be using event arguments to collect data from the workbook
+
   await Excel.run(async (context) => {
 
     //#region EVENT VARIABLES -----------------------------------------------------------------------------------
     var details = eventArgs.details; //Loads the values before and after the event
     var address = eventArgs.address; //Loads the cell's address where the event took place
+    var sheet = context.workbook.worksheets.getActiveWorksheet().load("name");
     var changedTable = context.workbook.tables.getItem(eventArgs.tableId).load("name"); //Returns tableId of the table where the event occured
     var regexStr = address.match(/[a-zA-Z]+|[0-9]+(?:\.[0-9]+|)/g); //Separates the column letter(s) from the row number for the address: presented as a string
     var changedColumn = regexStr[0]; //The first instance of the separated address array, being the column letter(s)
@@ -190,11 +191,15 @@ async function onTableChanged(eventArgs: Excel.TableChangedEventArgs) { //This f
       //#endregion ---------------------------------------------------------------------------
     //#endregion ------------------------------------------------------------------------------------------------
 
+
+
     //#region INITIATING THE MOVE EVENT -------------------------------------------------------------------------  
     var theChange = eventArgs.changeType; //Kind of change that was made
     if (theChange == "RangeEdited" && eventArgs.details !== undefined ) {
+      
+      // Ignore the moved-to table's on change event 
 
-      // console.log(eventArgs)
+
       
       console.log("The move data event has been initiated!!");
       
@@ -206,21 +211,35 @@ async function onTableChanged(eventArgs: Excel.TableChangedEventArgs) { //This f
 
     //#region MOVE CONDITIONS -----------------------------------------------------------------------------------
         
-      await context.sync().then(function () {
-        console.log("Promise Fulfilled!");
+      await context.sync().then(function () { // WHAT IS LOOPING
+        // console.log("Promise Fulfilled!");
 
-        console.log(myRow.values);
+        // console.log(myRow.values);
 
         var rowValues = myRow.values;
+
+        // console.log("The active worksheet is " + sheet.name);
+
+
 
 
         if (changedColumn == projectTypeColumn || productColumn) { //if updated data was in Project Type column, run the lookupStart function
           var projectTypeHours = lookupStart(rowValues, changedRow); //adds hours to turn-around time based on Project Type
+          // console.log("The projectTypeHours are " + projectTypeHours + " hours");
           var productHours = preLookupWork(rowValues, changedRow, projectTypeHours); //adds hours based on Product and adds to lookupStart output
+          // console.log("The productHours are " + productHours + " hours");
           var workHoursAdjust = lookupWork(projectTypeHours, productHours); //takes prelookupWork variable and divides by 3 if lookupStart was equal to 2. Otherwise remains the same.
+          // console.log("The workHoursAdjust are " + workHoursAdjust + " hours");
           var myDate = receivedAdjust(rowValues, changedRow); //adjusts start time to be within office hours
+          // console.log("The added date within office hours is " + myDate);
           var override = startPreAdjust(rowValues, changedRow, projectTypeHours, myDate); //adds manual override start hours to adjusted start time
+          // console.log("The date including the projectTypeHours and Start Override values is " + override);
           var weekendHoursAdjust = startPreWeekendAdjust(override); //adjusts override start date to be on a weekday, in the off chance it was submitted over the weekend
+          // console.log("The adjusted date if the added date falls on a weekend is " + weekendHoursAdjust);
+          var startedPickedUpBy = startedBy(rowValues, changedRow, sheet, weekendHoursAdjust);
+          console.log("The Started / Picked Up time is " + startedPickedUpBy);
+          
+
           
           // console.log(dateAddedSerialVar);
           // var dateOnly = dateAddedSerialVar|0;
@@ -350,9 +369,16 @@ async function onTableChanged(eventArgs: Excel.TableChangedEventArgs) { //This f
             console.log("Data was moved to the Todd Table!");
             return;
           } else {
-            console.log("Looks like there wasn't an Artist change this time. No data was moved...")
-          } return context.sync();
-        };
+            console.log("Looks like there wasn't an Artist change this time. No data was moved...");
+          } return;
+        } else {
+
+          console.log("The artist column was not updated, so nothing was moved!");
+          // context.sync();
+          return;
+        }
+        // context.sync();
+
       }).catch(function (error) {
         console.log("Promise Rejected");
       });
@@ -463,9 +489,9 @@ async function tryCatch(callback) {
  */   
 function lookupStart(rowValues, changedRow) { //loads these variables from another function to use in this function
   var address = "H" + (changedRow + 2); //takes the row that was updated and locates the address from the Project Type column.
-  console.log("The address of the new Project Type is " + address);
+  // console.log("The address of the new Project Type is " + address);
   var input = rowValues[0][7]; //assigns input the cell value in the changed row and the Project Type column (a nested array of values)
-  console.log(input);
+  // console.log(input);
 
   var a = ["Brand New Build", "Special Request"];
   var b = ["Brand New Build from Other Product Natives", "Brand New Build From Template", "Changes to Exisiting Natives", "Specification Check", "WeTransfer Upload to MS"];
@@ -477,7 +503,7 @@ function lookupStart(rowValues, changedRow) { //loads these variables from anoth
     output = 2; //adds 2 hours
   } else { //everything else...
     output = 24; //adds 24 hours
-  } console.log(output);
+  }
   return output;
 
   // var myReturnVal = lookupStart();
@@ -486,16 +512,16 @@ function lookupStart(rowValues, changedRow) { //loads these variables from anoth
 
 /**
  * Finds the value of Product in the changed row, returns a number of hours based on the product, and adds this number to projectTypeHours
- * @param rowValues loads the values of the changed row
- * @param changedRow loads the row number of the changed row
- * @param projectTypeHours lookupStart returned number
+ * @param {Array} rowValues loads the values of the changed row
+ * @param {Number} changedRow loads the row number of the changed row
+ * @param {Number} projectTypeHours lookupStart returned number
  * @returns A Number
  */
 function preLookupWork(rowValues, changedRow, projectTypeHours) {
   var address = "G" + (changedRow + 2); //takes the row that was updated and locates the address from the Product column.
-  console.log("The address of the new Product is " + address);
+  // console.log("The address of the new Product is " + address);
   var input = rowValues[0][6]; //assigns input the cell value in the changed row and the Product column (a nested array of values)
-  console.log(input);
+  // console.log(input);
   var a = ["Menu", "Brochure", "Coupon Booklet", "Jumbo Postcard"];
   var b = ["MenuXL", "BrochureXL", "Folded Magnet", "Colossal Postcard", "Large Plastic"];
   var c = ["Small Menu", "Small Brochure", "Flyer", "Letter", "Envelope Mailer", "Postcard", "Magnet", "Door Hanger", "New Mover", "Birthday??", "Logo Creation"];
@@ -518,28 +544,23 @@ function preLookupWork(rowValues, changedRow, projectTypeHours) {
     output = 15; //adds 15 hours
   } else { //everything else...
     output = 96; //adds 96 hours
-  } console.log(output);
+  } //console.log(output);
   var newOutput = output + projectTypeHours; //adds hours from lookupStart to output and assigns new output to global variable
-  console.log(newOutput);
+  // console.log(newOutput);
   return newOutput;
 };
 
 /**
- * if lookupStart number is 2, divide the prLookupWork number by 3. Otherwise, returns preLookupWork number
+ * if lookupStart number is 2, divide the preLookupWork number by 3. Otherwise, returns preLookupWork number
  * @param projectTypeHours lookupStart returned number
  * @param productHours preLookupWork returned number
  * @returns A Number
  */
 function lookupWork(projectTypeHours, productHours) {
-  var output;
   if(projectTypeHours == 2) { //if lookupStart number was 2...
-    output = productHours / 3; //take the value from prelookupWork and divide it by 3. Assign new vlaue to global variable
-    console.log(output);
-  } else { //otherwise...
-    output = productHours; //the new global variable is the same as y
-    console.log(output);
-    return output;
+    return (productHours / 3) //returns the productHours number divided by 3
   }
+  return productHours; //otherwise returns the productHours number unaltered
 }
 
 /**
@@ -550,36 +571,40 @@ function lookupWork(projectTypeHours, productHours) {
  */
 function receivedAdjust(rowValues, changedRow) {
   var address = "J" + (changedRow + 2); //takes the row that was updated and locates the address from the Added column.
-  console.log("The address of the new Product is " + address);
+  // console.log("The address of the new Product is " + address);
   var dateTime = rowValues[0][9]; //assigns input the cell value in the changed row and the Added column (a nested array of values)
 
   //the below code basically is just converting the serial number in dateTime to a date object, and then adjusting to read in EST.
   var date = new Date(Math.round((dateTime - 25569)*86400*1000)); //convert serial number to date object
   date.setHours(date.getHours() + 4); //adjusting from GMT to EST (adds 4 hours)
-  console.log(`Date() ::  Convert Excel serial to Date():
-  ${date}`)
+  // console.log(`Date() ::  Convert Excel serial to Date():
+  // ${date}`)
 
-  date = officeHours(date);
+  date = officeHours(date); //converts to be within office hours if it already isn't
   return date;
 }
 
+
+
+
 /**
  * Finds the value of Start Override in the changed row and adds it to projectTypeHours, then adds that new number as hours to myDate
- * @param rowValues loads the values of the changed row
- * @param changedRow loads the row number of the changed row
- * @param projectTypeHours lookupStart returned number
- * @param myDate receivedAdjust returned date
- * @returns Date
+ * @param {Array} rowValues loads the values of the changed row
+ * @param {Number} changedRow loads the row number of the changed row
+ * @param {Number} projectTypeHours lookupStart returned number
+ * @param {Date} myDate receivedAdjust returned date
+ * @return {Date}
  */
+
 function startPreAdjust(rowValues, changedRow, projectTypeHours, myDate) {
   var address = "U" + (changedRow + 2); //takes the row that was updated and locates the address from the Added column.
-  console.log("The address of the Start Override is " + address);
-  var startOverride = rowValues[0][20];
-  console.log(startOverride);
-  var snail = projectTypeHours + startOverride; // 26
+  // console.log("The address of the Start Override is " + address);
+  var startOverride = rowValues[0][20]; //gets values of Start Orverride cell
+  // console.log(startOverride);
+  var snail = projectTypeHours + startOverride; //adds start override value to the number of hours for the project type
   var snailFail = new Date(myDate);
-  snailFail.setHours(snailFail.getHours() + snail);;
-  console.log(snailFail);
+  snailFail.setHours(snailFail.getHours() + snail);; //adds snail hours to myDate
+  // console.log(snailFail);
   return snailFail;
 }
 
@@ -589,30 +614,62 @@ function startPreAdjust(rowValues, changedRow, projectTypeHours, myDate) {
  * @returns Date
  */
 function startPreWeekendAdjust(override) {
-  var dayOfWeek = override.getDay();
-  console.log(dayOfWeek);
+  var dayOfWeek = override.getDay(); //get day of week from startPreAdjust returned date
 
-  if (dayOfWeek == 0) {
+  if (dayOfWeek == 0) { //if weekday = Sunday, add one day and set time to 8:30am
     var newDate = new Date(override);
 
     newDate.setDate(newDate.getDate() + 1);
     newDate.setHours(8);
     newDate.setMinutes(30);
-    console.log(newDate);
+    // console.log(newDate);
     return newDate;
   }
 
-  if (dayOfWeek == 6) {
+  if (dayOfWeek == 6) { //if weekday = Saturday, add 2 days and set time to 8:30am
     var newDate = new Date(override);
 
     newDate.setDate(newDate.getDate() + 2);
     newDate.setHours(8);
     newDate.setMinutes(30);
-    console.log(newDate);
+    // console.log(newDate);
     return newDate;
+  } else { //if not a weekend, use date from startPreAdjust
+    return override;
   }
 
 }
+/**
+ * Prints the value of weekendHoursAdjust to the Picked Up / Started By column and formats the date in a readible format
+ * @param {Array} rowValues loads the values of the changed row
+ * @param {Number} changedRow loads the row number of the changed row
+ * @param {Object} sheet the active worksheet
+ * @param {Date} weekendHoursAdjust date adjusted to not land on a weekend
+ * @returns date
+ */
+function startedBy(rowValues, changedRow, sheet, weekendHoursAdjust) { //loads these variables from another function to use in this function
+  var address = "M" + (changedRow + 2); //takes the row that was updated and locates the address from the Picked Up / Started By column.
+  var range = sheet.getRange(address); //assigns the cell from the address variable to range
+  console.log(range);
+
+  var formatDate = weekendHoursAdjust.toLocaleDateString("en-us", { //formats the date to display correctly
+      weekday:'short',
+      month:'numeric',
+      day: 'numeric',
+      year: '2-digit'
+  });
+
+  var formatTime = weekendHoursAdjust.toLocaleTimeString("en-us", { //formats the time to display correctly
+    hour: '2-digit',
+    minute:'2-digit'
+  });
+
+  var squeekday = formatDate + " " + formatTime; //adds the correctly displayed date and time together
+
+  range.values = [[squeekday]]; //assigns the returned date value to the cell
+
+  return range.values; //commits changes and exits the function
+};
 
 
 
@@ -627,20 +684,19 @@ function officeHours(date) {
     var m = date.getMinutes(); // 30
 
     // Morning
-    if (h < 8) {
+    if (h < 8) { //if hours is before 8, set hours to 8 and minutes to 30.
       date.setHours(8);
-      if (m < 30) {
-        date.setMinutes(30);
-      };
+      date.setMinutes(30);
+    }
+    if (h == 8 && m < 30) { //if hours is 8 and minutes is before 30, set minutes to 30.
+      date.setMinutes(30);
     };
     // Evening
-    if (h > 17) {
+    if (h > 17 || (h == 17 && m > 30)) { //if hours is greater than 17 (5:00pm) OR if hours is 17 and minutes are greater than 30, add 1 one day, set hours to 8, and set minutes to 30.
       date.setDate(date.getDate() + 1);
       date.setHours(8);
-      if (m < 30) {
-        date.setMinutes(30);
-      };
+      date.setMinutes(30);
     };
-    console.log(date);
+    // console.log(date);
     return date;
 };
