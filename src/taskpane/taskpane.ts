@@ -712,7 +712,8 @@ async function tryCatch(callback) {
 
   //#endregion ------------------------------------------------------------------------------------------------------
 
-
+var remainderHour;
+var remainderMinutes;
   //#region OFFICE HOURS ---------------------------------------------------------------------------------------
   /**
    * Adjusts a date object so that it falls into office hours
@@ -721,7 +722,8 @@ async function tryCatch(callback) {
    */
   function officeHours(date) {
     var h = date.getHours(); // 4
-      var m = date.getMinutes(); // 30
+    var m = date.getMinutes(); // 30
+    var dayOfWeek = date.getDay(); //get day of week from date
 
       // Morning
       if (h < 8) { //if hours is before 8, set hours to 8 and minutes to 30.
@@ -732,10 +734,26 @@ async function tryCatch(callback) {
         date.setMinutes(30);
       };
       // Evening
-      if (h > 17 || (h == 17 && m > 30)) { //if hours is greater than 17 (5:00pm) OR if hours is 17 and minutes are greater than 30, add 1 one day, set hours to 8, and set minutes to 30.
-        date.setDate(date.getDate() + 1);
-        date.setHours(8);
-        date.setMinutes(30);
+      if (dayOfWeek == 5) { //if the day of the week is Friday...
+        if (h > 13 || (h == 13 && m > 30)) { //if hours is greater than 15 (1:00pm) OR if hours is 13 and minutes are greater than 30...
+          remainderHour = h - 13; //gets the humber of hours over 1:00pm
+          remainderMinutes = m - 30; //gets the number of minutes over 30 minutes (a negative number if it is under 30 minutes)
+          console.log("remainderHour = " + remainderHour);
+          console.log("remainderMinutes = " + remainderMinutes);
+          date.setDate(date.getDate() + 1); //add 1 day to the date (pushing this into the weekend, thus triggering the weekend adjust)
+          date.setHours(8 + remainderHour); //set hour to 8:00AM + remainderHours
+          date.setMinutes(30 + remainderMinutes); //set minutes to 30 + remainderMinutes
+          console.log("officeHours adjustment date is " + date);
+        };
+      } else if (h > 17 || (h == 17 && m > 30)) { //if hours is greater than 17 (5:00pm) OR if hours is 17 and minutes are greater than 30...
+        remainderHour = h - 17 //gets the numer of hours over 5:00pm
+        remainderMinutes = m - 30 //gets the number of minutes over 30 minutes (a negative number if it is under 30 minutes)
+        console.log("remainderHour = " + remainderHour);
+        console.log("remainderMinutes = " + remainderMinutes);
+        date.setDate(date.getDate() + 1); //add 1 day to the date
+        date.setHours(8 + remainderHour); //set hour to 8:00AM + remainderHours
+        date.setMinutes(30 + remainderMinutes); //set minutes to 30 + remainderMinutes
+        console.log("officeHours adjustment date is " + date);
       };
       // console.log(date);
       return date;
@@ -754,8 +772,8 @@ async function tryCatch(callback) {
       if (dayOfWeek == 0) { //if weekday = Sunday, add one day and set time to 8:30am
         var newDate = new Date(date);
         newDate.setDate(newDate.getDate() + 1);
-        newDate.setHours(8);
-        newDate.setMinutes(30);
+        newDate.setHours(8 + remainderHour);
+        newDate.setMinutes(30 + remainderMinutes);
         // console.log(newDate);
         return newDate;
       }
@@ -764,8 +782,8 @@ async function tryCatch(callback) {
         var newDate = new Date(date);
 
         newDate.setDate(newDate.getDate() + 2);
-        newDate.setHours(8);
-        newDate.setMinutes(30);
+        newDate.setHours(8 + remainderHour);
+        newDate.setMinutes(30 + remainderMinutes);
         // console.log(newDate);
         return newDate;
       } else { //if not a weekend, use original date
