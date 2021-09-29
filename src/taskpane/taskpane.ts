@@ -222,7 +222,7 @@ async function onTableChanged(eventArgs: Excel.TableChangedEventArgs) { //This f
 
 
 
-        if (changedColumn == projectTypeColumn || productColumn) { //if updated data was in Project Type column, run the lookupStart function
+        // if (changedColumn == projectTypeColumn || productColumn) { //if updated data was in Project Type column, run the lookupStart function
           var projectTypeHours = lookupStart(rowValues, changedRow); //adds hours to turn-around time based on Project Type
           // console.log("The projectTypeHours are " + projectTypeHours + " hours");
           var productHours = preLookupWork(rowValues, projectTypeHours); //adds hours based on Product and adds to lookupStart output
@@ -239,15 +239,7 @@ async function onTableChanged(eventArgs: Excel.TableChangedEventArgs) { //This f
           // console.log("The started date adjusted with the Work Override is " + workOverride);
           var proofToClient = toClient(changedRow, sheet, workOverride); //Prints the value of workOverride to the Proof to Client column and formats the date in a readible format.
           // console.log("The date for Proof to Client is " + proofToClient);
-          
-
-          
-          // console.log(dateAddedSerialVar);
-          // var dateOnly = dateAddedSerialVar|0;
-          // console.log(dateOnly);
-          // var timeOnly = (dateAddedSerialVar*1000000%1000000)/1000000;
-          // console.log(timeOnly);
-        }
+        // }
 
 
         if (changedColumn == artistColumn) { //if updated data was in the Artist column, run the following code
@@ -767,9 +759,20 @@ var remainderMinutes;
      * @returns Date
      */
      function weekendAdjust(date) {
+      var h = date.getHours(); // 4
+      var m = date.getMinutes(); // 30
       var dayOfWeek = date.getDay(); //get day of week from date
 
-      if (dayOfWeek == 0) { //if weekday = Sunday, add one day and set time to 8:30am
+      if (dayOfWeek == 5 && (h > 13 || h == 13 && m > 30)) { //if weekday = Friday and hours is greater than 13 OR if hours is equal to 13 and minutes is greater than 30, add three days and set time to 8:30am + remainders
+        var newDate = new Date(date);
+        newDate.setDate(newDate.getDate() + 3);
+        newDate.setHours(8 + remainderHour);
+        newDate.setMinutes(30 + remainderMinutes);
+        // console.log(newDate);
+        return newDate;
+      }
+
+      if (dayOfWeek == 0) { //if weekday = Sunday, add one day and set time to 8:30am + remainders
         var newDate = new Date(date);
         newDate.setDate(newDate.getDate() + 1);
         newDate.setHours(8 + remainderHour);
@@ -778,7 +781,7 @@ var remainderMinutes;
         return newDate;
       }
 
-      if (dayOfWeek == 6) { //if weekday = Saturday, add 2 days and set time to 8:30am
+      if (dayOfWeek == 6) { //if weekday = Saturday, add 2 days and set time to 8:30am + remainders
         var newDate = new Date(date);
 
         newDate.setDate(newDate.getDate() + 2);
