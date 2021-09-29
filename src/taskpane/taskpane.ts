@@ -222,7 +222,6 @@ async function onTableChanged(eventArgs: Excel.TableChangedEventArgs) { //This f
 
 
 
-
         if (changedColumn == projectTypeColumn || productColumn) { //if updated data was in Project Type column, run the lookupStart function
           var projectTypeHours = lookupStart(rowValues, changedRow); //adds hours to turn-around time based on Project Type
           // console.log("The projectTypeHours are " + projectTypeHours + " hours");
@@ -230,16 +229,16 @@ async function onTableChanged(eventArgs: Excel.TableChangedEventArgs) { //This f
           // console.log("The productHours are " + productHours + " hours");
           var workHoursAdjust = lookupWork(projectTypeHours, productHours); //takes prelookupWork variable and divides by 3 if lookupStart was equal to 2. Otherwise remains the same.
           // console.log("The workHoursAdjust are " + workHoursAdjust + " hours");
-          var myDate = receivedAdjust(rowValues, changedRow); //adjusts start time to be within office hours
+          var myDate = receivedAdjust(rowValues, changedRow); //grabs values from Added column and converts into date object in EST.
           // console.log("The added date within office hours is " + myDate);
-          var override = startPreAdjust(rowValues, projectTypeHours, myDate); //adds manual override start hours to adjusted start time
+          var override = startPreAdjust(rowValues, projectTypeHours, myDate); //adds manual override start hours to adjusted start time. Adjusts for office hours and weekends.
           // console.log("The date including the projectTypeHours and Start Override values is " + override);
-          var startedPickedUpBy = startedBy(changedRow, sheet, override);
+          var startedPickedUpBy = startedBy(changedRow, sheet, override); //Prints the value of override to the Picked Up / Started By column and formats the date in a readible format.
           // console.log("The Started / Picked Up time is " + startedPickedUpBy);
           var workOverride = workPrePreAdjust(rowValues, workHoursAdjust, startedPickedUpBy); //Finds the value of Work Override in the changed row and adds it to workHoursAdjust, then adds that new number as hours to startedPickedUpBy. Formats to be within office hours and on a weekday if needed.
-          console.log("The started date adjusted with the Work Override is " + workOverride);
-          var proofToClient = toClient(changedRow, sheet, workOverride);
-          console.log("The date for Proof to Client is " + proofToClient);
+          // console.log("The started date adjusted with the Work Override is " + workOverride);
+          var proofToClient = toClient(changedRow, sheet, workOverride); //Prints the value of workOverride to the Proof to Client column and formats the date in a readible format.
+          // console.log("The date for Proof to Client is " + proofToClient);
           
 
           
@@ -523,7 +522,7 @@ async function tryCatch(callback) {
 
     //#region MY DATE ----------------------------------------------------------------------------------------------
     /**
-     * Finds the value of Date Added in the changed row and converts it to be within office hours based on the officeHours function
+     * Finds the value of Date Added in the changed row and converts it to be a date object in EST.
      * @param rowValues loads the values of the changed row
      * @param changedRow loads the row number of the changed row
      * @returns Date
@@ -538,15 +537,13 @@ async function tryCatch(callback) {
       date.setHours(date.getHours() + 4); //adjusting from GMT to EST (adds 4 hours)
       // console.log(`Date() ::  Convert Excel serial to Date():
       // ${date}`)
-
-      date = officeHours(date); //converts to be within office hours if it already isn't
       return date;
     };
     //#endregion ---------------------------------------------------------------------------------------------------
 
     //#region OVERRIDE ---------------------------------------------------------------------------------------------
     /**
-     * Finds the value of Start Override in the changed row and adds it to projectTypeHours, then adds that new number as hours to myDate
+     * Finds the value of Start Override in the changed row and adds it to projectTypeHours, then adds that new number as hours to myDate. Adjusts for office hours and weekends.
      * @param {Array} rowValues loads the values of the changed row
      * @param {Number} projectTypeHours lookupStart returned number
      * @param {Date} myDate receivedAdjust returned date
@@ -559,14 +556,15 @@ async function tryCatch(callback) {
       var snailFail = new Date(myDate); //sets snailFail to myDate as a new date variable (so the old date doesnt get changed)
       snailFail.setHours(snailFail.getHours() + snail);; //adds snail hours to myDate
       // console.log(snailFail);
-      var snailMail = weekendAdjust(snailFail); //converts to be a weekday if it already isn't
-      return snailMail;
+      var snailMail = officeHours(snailFail); //converts to be within office hours if it already isn't
+      var snailFlail = weekendAdjust(snailMail); //converts to be a weekday if it already isn't
+      return snailFlail;
     }
     //#endregion ----------------------------------------------------------------------------------------------------
 
     //#region STARTED PICKED UP BY ---------------------------------------------------------------------------------
     /**
-     * Prints the value of weekendHoursAdjust to the Picked Up / Started By column and formats the date in a readible format
+     * Prints the value of override to the Picked Up / Started By column and formats the date in a readible format
      * @param {Number} changedRow loads the row number of the changed row
      * @param {Object} sheet the active worksheet
      * @param {Date} weekendHoursAdjust date adjusted to not land on a weekend
