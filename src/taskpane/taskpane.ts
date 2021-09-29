@@ -234,12 +234,12 @@ async function onTableChanged(eventArgs: Excel.TableChangedEventArgs) { //This f
           // console.log("The added date within office hours is " + myDate);
           var override = startPreAdjust(rowValues, projectTypeHours, myDate); //adds manual override start hours to adjusted start time
           // console.log("The date including the projectTypeHours and Start Override values is " + override);
-          var weekendHoursAdjust = startPreWeekendAdjust(override); //adjusts override start date to be on a weekday, in the off chance it was submitted over the weekend
-          // console.log("The adjusted date if the added date falls on a weekend is " + weekendHoursAdjust);
-          var startedPickedUpBy = startedBy(rowValues, changedRow, sheet, weekendHoursAdjust);
+          var startedPickedUpBy = startedBy(changedRow, sheet, override);
           // console.log("The Started / Picked Up time is " + startedPickedUpBy);
-          var workOverride = workPrePreAdjust(rowValues, workHoursAdjust, startedPickedUpBy);
+          var workOverride = workPrePreAdjust(rowValues, workHoursAdjust, startedPickedUpBy); //Finds the value of Work Override in the changed row and adds it to workHoursAdjust, then adds that new number as hours to startedPickedUpBy. Formats to be within office hours and on a weekday if needed.
           console.log("The started date adjusted with the Work Override is " + workOverride);
+          var proofToClient = toClient(changedRow, sheet, workOverride);
+          console.log("The date for Proof to Client is " + proofToClient);
           
 
           
@@ -559,65 +559,32 @@ async function tryCatch(callback) {
       var snailFail = new Date(myDate); //sets snailFail to myDate as a new date variable (so the old date doesnt get changed)
       snailFail.setHours(snailFail.getHours() + snail);; //adds snail hours to myDate
       // console.log(snailFail);
-      return snailFail;
+      var snailMail = weekendAdjust(snailFail); //converts to be a weekday if it already isn't
+      return snailMail;
     }
     //#endregion ----------------------------------------------------------------------------------------------------
-
-    //#region WEEKEND HOURS ADJUST ---------------------------------------------------------------------------------
-    /**
-     * Finds the day of the week from override and if it is a weekend, changes it to be Monday at 8:30am
-     * @param override startPreAdjust returned date
-     * @returns Date
-     */
-    function startPreWeekendAdjust(override) {
-      var dayOfWeek = override.getDay(); //get day of week from startPreAdjust returned date
-
-      if (dayOfWeek == 0) { //if weekday = Sunday, add one day and set time to 8:30am
-        var newDate = new Date(override);
-
-        newDate.setDate(newDate.getDate() + 1);
-        newDate.setHours(8);
-        newDate.setMinutes(30);
-        // console.log(newDate);
-        return newDate;
-      }
-
-      if (dayOfWeek == 6) { //if weekday = Saturday, add 2 days and set time to 8:30am
-        var newDate = new Date(override);
-
-        newDate.setDate(newDate.getDate() + 2);
-        newDate.setHours(8);
-        newDate.setMinutes(30);
-        // console.log(newDate);
-        return newDate;
-      } else { //if not a weekend, use date from startPreAdjust
-        return override;
-      }
-    }
-    //#endregion ------------------------------------------------------------------------------------------------------
 
     //#region STARTED PICKED UP BY ---------------------------------------------------------------------------------
     /**
      * Prints the value of weekendHoursAdjust to the Picked Up / Started By column and formats the date in a readible format
-     * @param {Array} rowValues loads the values of the changed row
      * @param {Number} changedRow loads the row number of the changed row
      * @param {Object} sheet the active worksheet
      * @param {Date} weekendHoursAdjust date adjusted to not land on a weekend
      * @returns date
      */
-    function startedBy(rowValues, changedRow, sheet, weekendHoursAdjust) { //loads these variables from another function to use in this function
+    function startedBy(changedRow, sheet, override) { //loads these variables from another function to use in this function
       var address = "M" + (changedRow + 2); //takes the row that was updated and locates the address from the Picked Up / Started By column.
       var range = sheet.getRange(address); //assigns the cell from the address variable to range
       // console.log(range);
 
-      var formatDate = weekendHoursAdjust.toLocaleDateString("en-us", { //formats the date to display correctly
+      var formatDate = override.toLocaleDateString("en-us", { //formats the date to display correctly
           weekday:'short',
           month:'numeric',
           day: 'numeric',
           year: '2-digit'
       });
 
-      var formatTime = weekendHoursAdjust.toLocaleTimeString("en-us", { //formats the time to display correctly
+      var formatTime = override.toLocaleTimeString("en-us", { //formats the time to display correctly
         hour: '2-digit',
         minute:'2-digit'
       });
@@ -635,7 +602,7 @@ async function tryCatch(callback) {
 
   //#region PROOF TO CLIENT --------------------------------------------------------------------------------------
 
-    //References the Project Type column (H), Product column (G), ...
+    //References the Project Type column (H), Product column (G), and the Work Override column (V) to return a specific date and time for a proof to be sent to the client. This value is returned in the Proof to Client column (N).
 
     //#region PRODUCT HOURS ----------------------------------------------------------------------------------------
     /**
@@ -691,9 +658,9 @@ async function tryCatch(callback) {
     }
     //#endregion ---------------------------------------------------------------------------------------------------
 
-    //#region skhjdfbnv --------------------------------------------------------------------------------------------
+    //#region WORKOVERRIDE --------------------------------------------------------------------------------------------
     /**
-     * Finds the value of Work Override in the changed row and adds it to workHoursAdjust, then adds that new number as hours to startedPickedUpBy
+     * Finds the value of Work Override in the changed row and adds it to workHoursAdjust, then adds that new number as hours to startedPickedUpBy. Formats to be within office hours and on a weekday if needed.
      * @param {Array} rowValues loads the values of the changed row
      * @param {Number} workHoursAdjust loads the values of lookupWork
      * @param {Date} startedPickedUpBy loads the date that the project should be picked up by
@@ -706,10 +673,46 @@ async function tryCatch(callback) {
       var snakeFake = new Date(startedPickedUpBy); //sets snakeFake to startedPickedUpBy as a new date variable (so the old date doesnt get changed)
       snakeFake.setHours(snakeFake.getHours() + snake);; //adds snake hours to startedPickedUpBy date
       // console.log(snakeFake);
-      return snakeFake;
-    }
+      var sharkBait = officeHours(snakeFake); //converts to be within office hours if it already isn't
+      var oHaAh = weekendAdjust(sharkBait); //converts to be a weekday if it already isn't
+      return oHaAh;
+    };
     //#endregion --------------------------------------------------------------------------------------------------
-  //#endregion ---------------------------------------------------------------------------------------------------
+
+    //#region PROOF TO CLIENT ---------------------------------------------------------------------------------
+    /**
+     * Prints the value of workOverride to the Proof to Client column and formats the date in a readible format
+     * @param {Number} changedRow loads the row number of the changed row
+     * @param {Object} sheet the active worksheet
+     * @param {Date} workOverride proof to client date found in the workPreAdjust function (after converted to be within office hours and on a weekday)
+     * @returns date
+     */
+    function toClient(changedRow, sheet, workOverride) { //loads these variables from another function to use in this function
+      var address = "N" + (changedRow + 2); //takes the row that was updated and locates the address from the Proof to Client column.
+      var range = sheet.getRange(address); //assigns the cell from the address variable to range
+      // console.log(range);
+
+      var formatDate = workOverride.toLocaleDateString("en-us", { //formats the date to display correctly
+          weekday:'short',
+          month:'numeric',
+          day: 'numeric',
+          year: '2-digit'
+      });
+
+      var formatTime = workOverride.toLocaleTimeString("en-us", { //formats the time to display correctly
+        hour: '2-digit',
+        minute:'2-digit'
+      });
+
+      var squeekday = formatDate + " " + formatTime; //adds the correctly displayed date and time together
+
+      range.values = [[squeekday]]; //assigns the returned date value to the cell
+
+      return range.values; //commits changes and exits the function
+    };
+    //#endregion ----------------------------------------------------------------------------------------------------
+
+  //#endregion ------------------------------------------------------------------------------------------------------
 
 
   //#region OFFICE HOURS ---------------------------------------------------------------------------------------
@@ -740,5 +743,37 @@ async function tryCatch(callback) {
       return date;
   };
   //#endregion --------------------------------------------------------------------------------------------------
+
+  //#region WEEKEND HOURS ADJUST ---------------------------------------------------------------------------------
+    /**
+     * Finds the day of the week from override and if it is a weekend, changes it to be Monday at 8:30am
+     * @param {Date} date Date to be adjusted to a weekday
+     * @returns Date
+     */
+     function weekendAdjust(date) {
+      var dayOfWeek = date.getDay(); //get day of week from date
+
+      if (dayOfWeek == 0) { //if weekday = Sunday, add one day and set time to 8:30am
+        var newDate = new Date(date);
+        newDate.setDate(newDate.getDate() + 1);
+        newDate.setHours(8);
+        newDate.setMinutes(30);
+        // console.log(newDate);
+        return newDate;
+      }
+
+      if (dayOfWeek == 6) { //if weekday = Saturday, add 2 days and set time to 8:30am
+        var newDate = new Date(date);
+
+        newDate.setDate(newDate.getDate() + 2);
+        newDate.setHours(8);
+        newDate.setMinutes(30);
+        // console.log(newDate);
+        return newDate;
+      } else { //if not a weekend, use original date
+        return date;
+      }
+    }
+    //#endregion ------------------------------------------------------------------------------------------------------
 
 //#endregion -----------------------------------------------------------------------------------------------------
