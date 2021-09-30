@@ -548,7 +548,7 @@ async function tryCatch(callback) {
       var snailFail = new Date(myDate); //sets snailFail to myDate as a new date variable (so the old date doesnt get changed)
       snailFail.setHours(snailFail.getHours() + snail);; //adds snail hours to myDate
       // console.log(snailFail);
-      var snailMail = officeHours(snailFail); //converts to be within office hours if it already isn't
+      var snailMail = officeHoursStart(snailFail); //converts to be within office hours if it already isn't
       var snailFlail = weekendAdjust(snailMail); //converts to be a weekday if it already isn't
       return snailFlail;
     }
@@ -661,9 +661,9 @@ async function tryCatch(callback) {
       // console.log(workOverride);
       var snake = workHoursAdjust + workOverride; //adds start override value to the number of hours for the project type
       var snakeFake = new Date(startedPickedUpBy); //sets snakeFake to startedPickedUpBy as a new date variable (so the old date doesnt get changed)
-      snakeFake.setHours(snakeFake.getHours() + snake);; //adds snake hours to startedPickedUpBy date
-      // console.log(snakeFake);
-      var sharkBait = officeHours(snakeFake); //converts to be within office hours if it already isn't
+      var shark = new Date(snakeFake);
+      shark.setHours(shark.getHours() + snake); //adds snake hours to startedPickedUpBy date
+      var sharkBait = officeHoursWork(shark, snake, startedPickedUpBy); //converts to be within office hours if it already isn't
       var oHaAh = weekendAdjust(sharkBait); //converts to be a weekday if it already isn't
       return oHaAh;
     };
@@ -704,18 +704,20 @@ async function tryCatch(callback) {
 
   //#endregion ------------------------------------------------------------------------------------------------------
 
-var remainderHour;
-var remainderMinutes;
-  //#region OFFICE HOURS ---------------------------------------------------------------------------------------
+
+
+  //#region OFFICE HOURS START ---------------------------------------------------------------------------------------
   /**
    * Adjusts a date object so that it falls into office hours
    * @param {Date} date Date to be adjusted to the start of office hours
    * @returns Date
    */
-  function officeHours(date) {
-    var h = date.getHours(); // 4
-    var m = date.getMinutes(); // 30
-    var dayOfWeek = date.getDay(); //get day of week from date
+  function officeHoursStart(date) {
+    var h = date.getHours(); // 14
+    var m = date.getMinutes(); // 17
+    var dayOfWeek = date.getDay(); //get day of week from date - 1
+    var remainderHour;
+    var remainderMinutes;
 
       // Morning
       if (h < 8) { //if hours is before 8, set hours to 8 and minutes to 30.
@@ -752,47 +754,189 @@ var remainderMinutes;
   };
   //#endregion --------------------------------------------------------------------------------------------------
 
-  //#region WEEKEND HOURS ADJUST ---------------------------------------------------------------------------------
-    /**
-     * Finds the day of the week from override and if it is a weekend, changes it to be Monday at 8:30am
-     * @param {Date} date Date to be adjusted to a weekday
-     * @returns Date
-     */
-     function weekendAdjust(date) {
-      var h = date.getHours(); // 4
-      var m = date.getMinutes(); // 30
-      var dayOfWeek = date.getDay(); //get day of week from date
+  //#region OFFICE HOURS WORK ---------------------------------------------------------------------------------------
+  /**
+   * Adjusts a date object so that it falls into office hours
+   * @param {Date} date Date to be adjusted to the start of office hours
+   * @returns Date
+   */
+  function officeHoursWork(date, hoursAdjust, originalDate) {
+    var endHour;
+    var endMinute;
 
-      if (dayOfWeek == 5 && (h > 13 || h == 13 && m > 30)) { //if weekday = Friday and hours is greater than 13 OR if hours is equal to 13 and minutes is greater than 30, add three days and set time to 8:30am + remainders
-        var newDate = new Date(date);
-        newDate.setDate(newDate.getDate() + 3);
-        newDate.setHours(8 + remainderHour);
-        newDate.setMinutes(30 + remainderMinutes);
-        // console.log(newDate);
-        return newDate;
-      }
-
-      if (dayOfWeek == 0) { //if weekday = Sunday, add one day and set time to 8:30am + remainders
-        var newDate = new Date(date);
-        newDate.setDate(newDate.getDate() + 1);
-        newDate.setHours(8 + remainderHour);
-        newDate.setMinutes(30 + remainderMinutes);
-        // console.log(newDate);
-        return newDate;
-      }
-
-      if (dayOfWeek == 6) { //if weekday = Saturday, add 2 days and set time to 8:30am + remainders
-        var newDate = new Date(date);
-
-        newDate.setDate(newDate.getDate() + 2);
-        newDate.setHours(8 + remainderHour);
-        newDate.setMinutes(30 + remainderMinutes);
-        // console.log(newDate);
-        return newDate;
-      } else { //if not a weekend, use original date
-        return date;
-      }
+    function dayOfWeek(d) {
+      var day = d.getDay();
+      return day;
     }
-    //#endregion ------------------------------------------------------------------------------------------------------
+
+    var originalDayOfWeek = dayOfWeek(originalDate);
+    var adjustedDayOfWeek = dayOfWeek(date);
+
+    if (adjustedDayOfWeek == 5) { //if day of week is Friday, set end of office hours to 1:30PM, otherwise office hours end at 5:30PM
+      endHour = 13;
+      endMinute = 30;
+    } else {
+      endHour = 17;
+      endMinute = 30;
+    }
+
+
+    var h = date.getHours(); // 6
+    var m = date.getMinutes(); // 17
+    var originalH = originalDate.getHours(); //14
+    var originalM = originalDate.getMinutes(); //17
+    var remainderHour;
+    var remainderMinutes;
+    // var dayOfWeek = originalDate.getDay(); //get day of week from date - 1
+
+
+    findingRemainders(h, m, endHour, endMinute, originalH, originalM, remainderHour, remainderMinutes);
+    remainders(remainderHour, remainderMinutes, hoursAdjust);
+
+    date.setDate(date.getDate() + 1); //add 1 day to the date
+    date.setHours(8 + remainderHour); //set hour to 8:00AM + remainderHours
+    date.setMinutes(30 + remainderMinutes); //set minutes to 30 + remainderMinutes
+    var newHours = date.getHours();
+    var newMinutes = date.getMinutes();
+
+    for (var i = 0; i < ?; i++) {
+    findingRemainders(newHours, newMinutes, endHour, endMinute, h, m, remainderHour, remainderMinutes);
+    remainders(remainderHour, remainderMinutes, hoursAdjust);
+    // afterHoursRepeat(newHours, newMinutes); //if the new date is still 
+    };
+
+
+
+    if (h < 8 || (h == 8 && m < 30)) { //if the adjusted time falls before office hours...
+
+    }
+
+
+
+
+
+
+
+
+
+
+
+      // // Morning
+      // if (h < 8) { //if hours is before 8, set hours to 8 and minutes to 30.
+      //   date.setHours(8 + remainingHours);
+      //   date.setMinutes(30 + remainingMinutes);
+      // }
+      // if (h == 8 && m < 30) { //if hours is 8 and minutes is before 30, set minutes to 30.
+      //   date.setMinutes(30);
+      // };
+      // // Evening
+      // if (dayOfWeek == 5) { //if the day of the week is Friday...
+      //   if (h > 13 || (h == 13 && m > 30)) { //if hours is greater than 15 (1:00pm) OR if hours is 13 and minutes are greater than 30...
+      //     remainderHour = h - 13; //gets the humber of hours over 1:00pm
+      //     remainderMinutes = m - 30; //gets the number of minutes over 30 minutes (a negative number if it is under 30 minutes)
+      //     console.log("remainderHour = " + remainderHour);
+      //     console.log("remainderMinutes = " + remainderMinutes);
+      //     date.setDate(date.getDate() + 1); //add 1 day to the date (pushing this into the weekend, thus triggering the weekend adjust)
+      //     date.setHours(8 + remainderHour); //set hour to 8:00AM + remainderHours
+      //     date.setMinutes(30 + remainderMinutes); //set minutes to 30 + remainderMinutes
+      //     console.log("officeHours adjustment date is " + date);
+      //   };
+      // } else if (h > 17 || (h == 17 && m > 30)) { //if hours is greater than 17 (5:00pm) OR if hours is 17 and minutes are greater than 30...
+      //   remainderHour = h - 17 //gets the numer of hours over 5:00pm
+      //   remainderMinutes = m - 30 //gets the number of minutes over 30 minutes (a negative number if it is under 30 minutes)
+      //   console.log("remainderHour = " + remainderHour);
+      //   console.log("remainderMinutes = " + remainderMinutes);
+      //   date.setDate(date.getDate() + 1); //add 1 day to the date
+      //   date.setHours(8 + remainderHour); //set hour to 8:00AM + remainderHours
+      //   date.setMinutes(30 + remainderMinutes); //set minutes to 30 + remainderMinutes
+      //   console.log("officeHours adjustment date is " + date);
+      // };
+      // // console.log(date);
+      // return date;
+  };
+//#endregion --------------------------------------------------------------------------------------------------
+
+function findingRemainders (newH, newM, endHour, endMinute, oldH, oldM, remainderHour, remainderMinutes) {
+
+  if (newH > endHour || (newH == endHour && newM > endMinute)) { //if the adjusted time falls after office hours...
+    //I need to find out how much time I need to add to the next day based on the amount of hours that were added in the workOverride and the amount of time that has already passed from the pick-up/start date to the end of office hours
+    remainderHour = endHour - oldH; //gets the number of hours before 5:00pm or 1:00pm from the start by time
+    //remainderHour = 3
+    remainderMinutes = endMinute - oldM; //gets the number of minutes under 30 minutes from the start by time (a negative number if it is above 30 minutes)
+    //remainderMinutes = 13
+
+    //So far, basically, we have the end of office hours time - the start by time (which will always be within office hours), giving us the amount of time that has already passed from the hoursAdjust number that we are adding to the start time of the next day
+  };
+};
+
+function remainders(rH, rM, hoursAdjust) { //Basically, this will return the value of hoursAdjust - remainder hours and minutes, giving us an adjusted hoursAdjust time that we will end up adding to the new start time to accuractly reflect a turn-around time within office hours
+  if (rM > 0) { //if the remainderMinutes is greater than 0 (and therefore has minutes)...
+    var remainingHours = hoursAdjust - rH; //subtracts the remainderHours from hoursAdjust (# of hours added to turn around time based on previously run functions)
+    //hoursAdjust = 16
+    //remainingHours = 16 - 3 = 13
+    remainingHours - 1; //subracts one, since minutes will be added to this number (remember, we are going backwards)
+    var remainingMinutes = 60 - rM; //subtracts 60 from the remainderMinutes (since hoursAdjust should always be a whole number...hopefully)
+    //remainingMinutes = 60 - 13 = 47
+  } else if (rM == 0) {
+    var remainingHours = hoursAdjust - rH; //subtracts the remainderHours from hoursAdjust (# of hours added to turn around time based on previously run functions)
+    //hoursAdjust = 16
+    //remainingHours = 16 - 3 = 13
+    var remainingMinutes = 0;
+  };
+};
+
+// function afterHoursRepeat(newHours, newMinutes) {
+//   if (newHours > endHour || (newHours == endHour && newMinutes > endMinute)) { //if the adjusted time falls after office hours again...
+//     remainderHour = newHours - endHour; //gets the number of hours after 5:00pm or 1:00pm from the start by time
+//     remainderMinutes = newMinutes - endMinute; //gets the number of minutes under 30 minutes from the start by time (a negative number if it is above 30 minutes)
+//     remainders(remainderHour, remainderMinutes);
+//     date.setDate(date.getDate() + 1); //add 1 day to the date
+//     date.setHours(8 + remainderHour); //set hour to 8:00AM + remainderHours
+//     date.setMinutes(30 + remainderMinutes); //set minutes to 30 + remainderMinutes
+//   };
+// };
+
+//#region WEEKEND HOURS ADJUST ---------------------------------------------------------------------------------
+  /**
+   * Finds the day of the week from override and if it is a weekend, changes it to be Monday at 8:30am
+   * @param {Date} date Date to be adjusted to a weekday
+   * @returns Date
+   */
+    function weekendAdjust(date) {
+    var h = date.getHours(); // 4
+    var m = date.getMinutes(); // 30
+    var dayOfWeek = date.getDay(); //get day of week from date
+
+    if (dayOfWeek == 5 && (h > 13 || h == 13 && m > 30)) { //if weekday = Friday and hours is greater than 13 OR if hours is equal to 13 and minutes is greater than 30, add three days and set time to 8:30am + remainders
+      var newDate = new Date(date);
+      newDate.setDate(newDate.getDate() + 3);
+      newDate.setHours(8 + remainderHour);
+      newDate.setMinutes(30 + remainderMinutes);
+      // console.log(newDate);
+      return newDate;
+    }
+
+    if (dayOfWeek == 0) { //if weekday = Sunday, add one day and set time to 8:30am + remainders
+      var newDate = new Date(date);
+      newDate.setDate(newDate.getDate() + 1);
+      newDate.setHours(8 + remainderHour);
+      newDate.setMinutes(30 + remainderMinutes);
+      // console.log(newDate);
+      return newDate;
+    }
+
+    if (dayOfWeek == 6) { //if weekday = Saturday, add 2 days and set time to 8:30am + remainders
+      var newDate = new Date(date);
+
+      newDate.setDate(newDate.getDate() + 2);
+      newDate.setHours(8 + remainderHour);
+      newDate.setMinutes(30 + remainderMinutes);
+      // console.log(newDate);
+      return newDate;
+    } else { //if not a weekend, use original date
+      return date;
+    }
+  }
+  //#endregion ------------------------------------------------------------------------------------------------------
 
 //#endregion -----------------------------------------------------------------------------------------------------
