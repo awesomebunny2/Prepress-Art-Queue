@@ -30,6 +30,18 @@ window.onload = function() { //Wait for the window to load, then do the followin
     document.getElementById("add-to-queue").style.display = "none";
     document.getElementById("home").style.display = "block";
   };
+
+  // Working here
+
+  // var theDate = new Date();
+  // theDate.setHours(17);
+  // theDate.setMinutes(29);
+  // theDate.setSeconds(0);
+  
+
+
+  // console.log(timeBetweenNowAndTomorrowMorning)
+
 };
 //#endregion ------------------------------------------------------------------------------------------------------
 
@@ -235,7 +247,7 @@ async function onTableChanged(eventArgs: Excel.TableChangedEventArgs) { //This f
           // console.log("The date including the projectTypeHours and Start Override values is " + override);
           var startedPickedUpBy = startedBy(changedRow, sheet, override); //Prints the value of override to the Picked Up / Started By column and formats the date in a readible format.
           // console.log("The Started / Picked Up time is " + startedPickedUpBy);
-          var workOverride = workPrePreAdjust(rowValues, workHoursAdjust, startedPickedUpBy); //Finds the value of Work Override in the changed row and adds it to workHoursAdjust, then adds that new number as hours to startedPickedUpBy. Formats to be within office hours and on a weekday if needed.
+          var workOverride = workPrePreAdjust(rowValues, workHoursAdjust, override); //Finds the value of Work Override in the changed row and adds it to workHoursAdjust, then adds that new number as hours to startedPickedUpBy. Formats to be within office hours and on a weekday if needed.
           // console.log("The started date adjusted with the Work Override is " + workOverride);
           var proofToClient = toClient(changedRow, sheet, workOverride); //Prints the value of workOverride to the Proof to Client column and formats the date in a readible format.
           // console.log("The date for Proof to Client is " + proofToClient);
@@ -656,14 +668,30 @@ async function tryCatch(callback) {
      * @param {Date} startedPickedUpBy loads the date that the project should be picked up by
      * @returns Date
      */
-    function workPrePreAdjust (rowValues, workHoursAdjust, startedPickedUpBy) {
+    function workPrePreAdjust (rowValues, workHoursAdjust, override) {
       var workOverride = rowValues[0][21]; //gets values of Work Orverride cell
       // console.log(workOverride);
       var snake = workHoursAdjust + workOverride; //adds start override value to the number of hours for the project type
-      var snakeFake = new Date(startedPickedUpBy); //sets snakeFake to startedPickedUpBy as a new date variable (so the old date doesnt get changed)
+      var snakeFake = new Date(override); //sets snakeFake to startedPickedUpBy as a new date variable (so the old date doesnt get changed)
       var shark = new Date(snakeFake);
       shark.setHours(shark.getHours() + snake); //adds snake hours to startedPickedUpBy date
-      var sharkBait = officeHoursWork(shark, snake, startedPickedUpBy); //converts to be within office hours if it already isn't
+
+      var newVar = timeBetweenDateAndTomorrowMorning(snakeFake);
+      // How many hours between newVar and the next day at 8:30am 
+
+      console.log(newVar)
+
+      if (newVar > 15 && newVar < 24) {
+        // It's before 5:30PM & 8:30AM
+        console.log(`snakeFake is between 5:30PM & 8:30AM`)
+      } else if (newVar < 15) {
+        // It's past 5:30
+        console.log(`snakeFake is  past 5:30PM`)
+      }
+
+
+
+      var sharkBait = officeHoursWork(shark, snake, override); //converts to be within office hours if it already isn't
       var oHaAh = weekendAdjust(sharkBait); //converts to be a weekday if it already isn't
       return oHaAh;
     };
@@ -732,22 +760,22 @@ async function tryCatch(callback) {
         if (h > 13 || (h == 13 && m > 30)) { //if hours is greater than 15 (1:00pm) OR if hours is 13 and minutes are greater than 30...
           remainderHour = h - 13; //gets the humber of hours over 1:00pm
           remainderMinutes = m - 30; //gets the number of minutes over 30 minutes (a negative number if it is under 30 minutes)
-          console.log("remainderHour = " + remainderHour);
-          console.log("remainderMinutes = " + remainderMinutes);
+          // console.log("remainderHour = " + remainderHour);
+          // console.log("remainderMinutes = " + remainderMinutes);
           date.setDate(date.getDate() + 1); //add 1 day to the date (pushing this into the weekend, thus triggering the weekend adjust)
           date.setHours(8 + remainderHour); //set hour to 8:00AM + remainderHours
           date.setMinutes(30 + remainderMinutes); //set minutes to 30 + remainderMinutes
-          console.log("officeHours adjustment date is " + date);
+          // console.log("officeHours adjustment date is " + date);
         };
       } else if (h > 17 || (h == 17 && m > 30)) { //if hours is greater than 17 (5:00pm) OR if hours is 17 and minutes are greater than 30...
         remainderHour = h - 17 //gets the numer of hours over 5:00pm
         remainderMinutes = m - 30 //gets the number of minutes over 30 minutes (a negative number if it is under 30 minutes)
-        console.log("remainderHour = " + remainderHour);
-        console.log("remainderMinutes = " + remainderMinutes);
+        // console.log("remainderHour = " + remainderHour);
+        // console.log("remainderMinutes = " + remainderMinutes);
         date.setDate(date.getDate() + 1); //add 1 day to the date
         date.setHours(8 + remainderHour); //set hour to 8:00AM + remainderHours
         date.setMinutes(30 + remainderMinutes); //set minutes to 30 + remainderMinutes
-        console.log("officeHours adjustment date is " + date);
+        // console.log("officeHours adjustment date is " + date);
       };
       // console.log(date);
       return date;
@@ -778,7 +806,7 @@ async function tryCatch(callback) {
     } else {
       endHour = 17;
       endMinute = 30;
-    }
+    };
 
 
     var h = date.getHours(); // 6
@@ -787,34 +815,91 @@ async function tryCatch(callback) {
     var originalM = originalDate.getMinutes(); //17
     var remainderHour;
     var remainderMinutes;
-    // var dayOfWeek = originalDate.getDay(); //get day of week from date - 1
 
 
-    findingRemainders(h, m, endHour, endMinute, originalH, originalM, remainderHour, remainderMinutes);
-    remainders(remainderHour, remainderMinutes, hoursAdjust);
+    
+    var hoursToEnd = 24 - endHour; //7
+    var minutesToEnd = 0; //0
 
-    date.setDate(date.getDate() + 1); //add 1 day to the date
-    date.setHours(8 + remainderHour); //set hour to 8:00AM + remainderHours
-    date.setMinutes(30 + remainderMinutes); //set minutes to 30 + remainderMinutes
-    var newHours = date.getHours();
-    var newMinutes = date.getMinutes();
+    if (endMinute > 0) {
+      hoursToEnd = hoursToEnd - 1;
+      minutesToEnd = minutesToEnd + endMinute;
+    }; //hoursToEnd = 6 & minutesToEnd = 30
 
-    for (var i = 0; i < ?; i++) {
-    findingRemainders(newHours, newMinutes, endHour, endMinute, h, m, remainderHour, remainderMinutes);
-    remainders(remainderHour, remainderMinutes, hoursAdjust);
-    // afterHoursRepeat(newHours, newMinutes); //if the new date is still 
+    var hoursToNextDay = hoursToEnd + 8; //14
+    var minutesToNextDay = minutesToEnd + 30; //60
+
+    if (minutesToNextDay > 59) {
+      hoursToNextDay = hoursToNextDay + 1;
+      minutesToNextDay = minutesToNextDay -60;
+    } //hoursToNextDay = 15 & minutesToNextDay = 0
+
+    var hoursToAdd = hoursToNextDay + hoursAdjust; //15 + 16 = 31
+    var minutesToAdd = minutesToNextDay; //0 (I have this here just in case there ever comes a time that hoursAdjust returns a decimal, in whihc case I will need to rework some of this to convert the decimal into minutes)
+    var adjustedDate = new Date(originalDate);
+
+    adjustedDate.setHours(adjustedDate.getHours() + hoursToAdd); //14 (2:00PM) + 31 (9:00PM next day)
+    adjustedDate.setMinutes(adjustedDate.getMinutes() + minutesToAdd); //17 (2:17) + 0 = 17 (9:17PM next day)
+
+    var withinOfficeHours;
+
+    while (withinOfficeHours = false) {
+
+      if (((adjustedDate.getHours() < endHour) || (adjustedDate.getHours() == endHour && adjustedDate.getMinutes() < 30)) || ((adjustedDate.getHours() > 8) || (adjustedDate.getHours() == 8 && adjustedDate.getMinutes() > 30))) {
+        withinOfficeHours = true;
+      };
+
+      
     };
 
 
-
-    if (h < 8 || (h == 8 && m < 30)) { //if the adjusted time falls before office hours...
-
-    }
+    // var theRemainders = findingRemainders(h, m, endHour, endMinute, originalH, originalM); //finds the remainder from the end of day to the pick up time
+    // // theRemainders = [remainderHour, remainderMinutes]
 
 
+    // var newHoursAdjust = adj(theRemainders[0], theRemainders[1], hoursAdjust); //subtracts theRemainders from the hoursAdjust
+    // // adjustedRemainder = [remainingHours, remainingMinutes];
+    // var addToStartHours = hoursToNextDay + newHoursAdjust[0]; //15+12 = 27
+    // var addToStartMinutes = 30 + newHoursAdjust[1]; //30+47 = 77
+
+    // if (addToStartMinutes > 59) {
+    //   addToStartHours + 1;
+    //   addToStartMinutes - 60;
+    // }; //startHours = 28 & startMinutes = 17
+
+    // var adjustedDate = new Date(originalDate);
+
+    // adjustedDate.setHours(originalDate.getHours() + addToStartHours); //14 (2:00) + 28 = 6:00PM next day
+    // adjustedDate.setMinutes(originalDate.getMinutes() + addToStartMinutes); //17 (2:17) + 17 = 34 (6:34PM next day)
 
 
 
+    // date.setDate(date.getDate() + 1); //add 1 day to the date
+    // date.setHours(8 + ); //set hour to 8:00AM + remainderHours
+    // date.setMinutes(30 + remainderMinutes); //set minutes to 30 + remainderMinutes
+    // var newHours = date.getHours();
+    // var newMinutes = date.getMinutes();
+
+    // for (var i = 0; i < ?; i++) {
+    // findingRemainders(newHours, newMinutes, endHour, endMinute, h, m);
+    // remainders(remainderHour, remainderMinutes, hoursAdjust);
+    // // afterHoursRepeat(newHours, newMinutes); //if the new date is still 
+    // };
+
+
+
+    // if (h < 8 || (h == 8 && m < 30)) { //if the adjusted time falls before office hours...
+
+    // }
+
+
+
+
+    //need to find the remainder from the end of day to the pick up time = var remainder
+    //need to subtract the remainder time from the hoursAdjust = newHoursAdjust
+    //need to find the amount of time between the end of day and the beginning of next day = var outOfOfficeTime
+    //need to add add the newHoursAdjust time to the outOfOfficeTime = totalTimeToAdd
+    //need to add totalTimeToAdd to pick up time
 
 
 
@@ -856,34 +941,39 @@ async function tryCatch(callback) {
   };
 //#endregion --------------------------------------------------------------------------------------------------
 
-function findingRemainders (newH, newM, endHour, endMinute, oldH, oldM, remainderHour, remainderMinutes) {
+// function findingRemainders (newH, newM, endHour, endMinute, oldH, oldM) {
 
-  if (newH > endHour || (newH == endHour && newM > endMinute)) { //if the adjusted time falls after office hours...
-    //I need to find out how much time I need to add to the next day based on the amount of hours that were added in the workOverride and the amount of time that has already passed from the pick-up/start date to the end of office hours
-    remainderHour = endHour - oldH; //gets the number of hours before 5:00pm or 1:00pm from the start by time
-    //remainderHour = 3
-    remainderMinutes = endMinute - oldM; //gets the number of minutes under 30 minutes from the start by time (a negative number if it is above 30 minutes)
-    //remainderMinutes = 13
+//   if (newH > endHour || (newH == endHour && newM > endMinute)) { //if the adjusted time falls after office hours...
+//     //I need to find out how much time I need to add to the next day based on the amount of hours that were added in the workOverride and the amount of time that has already passed from the pick-up/start date to the end of office hours
+//     var remainderHour = endHour - oldH; //gets the number of hours before 5:00pm or 1:00pm from the start by time
+//     //remainderHour = 3
+//     var remainderMinutes = endMinute - oldM; //gets the number of minutes under 30 minutes from the start by time (a negative number if it is above 30 minutes)
+//     //remainderMinutes = 13
 
-    //So far, basically, we have the end of office hours time - the start by time (which will always be within office hours), giving us the amount of time that has already passed from the hoursAdjust number that we are adding to the start time of the next day
-  };
-};
+//     //So far, basically, we have the end of office hours time - the start by time (which will always be within office hours), giving us the amount of time that has already passed from the hoursAdjust number that we are adding to the start time of the next day
+//   };
 
-function remainders(rH, rM, hoursAdjust) { //Basically, this will return the value of hoursAdjust - remainder hours and minutes, giving us an adjusted hoursAdjust time that we will end up adding to the new start time to accuractly reflect a turn-around time within office hours
-  if (rM > 0) { //if the remainderMinutes is greater than 0 (and therefore has minutes)...
-    var remainingHours = hoursAdjust - rH; //subtracts the remainderHours from hoursAdjust (# of hours added to turn around time based on previously run functions)
-    //hoursAdjust = 16
-    //remainingHours = 16 - 3 = 13
-    remainingHours - 1; //subracts one, since minutes will be added to this number (remember, we are going backwards)
-    var remainingMinutes = 60 - rM; //subtracts 60 from the remainderMinutes (since hoursAdjust should always be a whole number...hopefully)
-    //remainingMinutes = 60 - 13 = 47
-  } else if (rM == 0) {
-    var remainingHours = hoursAdjust - rH; //subtracts the remainderHours from hoursAdjust (# of hours added to turn around time based on previously run functions)
-    //hoursAdjust = 16
-    //remainingHours = 16 - 3 = 13
-    var remainingMinutes = 0;
-  };
-};
+//   return [remainderHour, remainderMinutes];
+
+// };
+
+// function adj(rH, rM, hoursAdjust) { //Basically, this will return the value of hoursAdjust - remainder hours and minutes, giving us an adjusted hoursAdjust time that we will end up adding to the new start time to accuractly reflect a turn-around time within office hours
+//   if (rM > 0) { //if the remainderMinutes is greater than 0 (and therefore has minutes)...
+//     var remainingHours = hoursAdjust - rH; //subtracts the remainderHours from hoursAdjust (# of hours added to turn around time based on previously run functions)
+//     //hoursAdjust = 16
+//     //remainingHours = 16 - 3 = 13
+//     remainingHours - 1; //subracts one, since minutes will be added to this number (remember, we are going backwards)
+//     var remainingMinutes = 60 - rM; //subtracts 60 from the remainderMinutes (since hoursAdjust should always be a whole number...hopefully)
+//     //remainingMinutes = 60 - 13 = 47
+//   } else if (rM == 0) {
+//     var remainingHours = hoursAdjust - rH; //subtracts the remainderHours from hoursAdjust (# of hours added to turn around time based on previously run functions)
+//     //hoursAdjust = 16
+//     //remainingHours = 16 - 3 = 13
+//     var remainingMinutes = 0;
+//   };
+//   return [remainingHours, remainingMinutes];
+// };
+
 
 // function afterHoursRepeat(newHours, newMinutes) {
 //   if (newHours > endHour || (newHours == endHour && newMinutes > endMinute)) { //if the adjusted time falls after office hours again...
@@ -910,8 +1000,8 @@ function remainders(rH, rM, hoursAdjust) { //Basically, this will return the val
     if (dayOfWeek == 5 && (h > 13 || h == 13 && m > 30)) { //if weekday = Friday and hours is greater than 13 OR if hours is equal to 13 and minutes is greater than 30, add three days and set time to 8:30am + remainders
       var newDate = new Date(date);
       newDate.setDate(newDate.getDate() + 3);
-      newDate.setHours(8 + remainderHour);
-      newDate.setMinutes(30 + remainderMinutes);
+      newDate.setHours(8) //+ remainderHour);
+      newDate.setMinutes(30) // + remainderMinutes);
       // console.log(newDate);
       return newDate;
     }
@@ -919,8 +1009,8 @@ function remainders(rH, rM, hoursAdjust) { //Basically, this will return the val
     if (dayOfWeek == 0) { //if weekday = Sunday, add one day and set time to 8:30am + remainders
       var newDate = new Date(date);
       newDate.setDate(newDate.getDate() + 1);
-      newDate.setHours(8 + remainderHour);
-      newDate.setMinutes(30 + remainderMinutes);
+      newDate.setHours(8) //+ remainderHour);
+      newDate.setMinutes(30) // + remainderMinutes);
       // console.log(newDate);
       return newDate;
     }
@@ -929,8 +1019,8 @@ function remainders(rH, rM, hoursAdjust) { //Basically, this will return the val
       var newDate = new Date(date);
 
       newDate.setDate(newDate.getDate() + 2);
-      newDate.setHours(8 + remainderHour);
-      newDate.setMinutes(30 + remainderMinutes);
+      newDate.setHours(8) // + remainderHour);
+      newDate.setMinutes(30) // + remainderMinutes);
       // console.log(newDate);
       return newDate;
     } else { //if not a weekend, use original date
@@ -940,3 +1030,64 @@ function remainders(rH, rM, hoursAdjust) { //Basically, this will return the val
   //#endregion ------------------------------------------------------------------------------------------------------
 
 //#endregion -----------------------------------------------------------------------------------------------------
+
+
+function timeBetweenDateAndTomorrowMorning(date) {
+
+
+    // if (typeof date !== "date") {
+    //   console.log("That wasn't a date!");
+    //   return;
+    // }
+
+    /**
+     * ↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓ TODD'S TIME CALCULATION
+     */
+       console.log("Linked!")
+       var midnite = new Date(date);
+       midnite.setDate(midnite.getDate() + 1)
+       midnite.setHours(0);
+       midnite.setMinutes(0);
+       midnite.setSeconds(0);
+   
+      //  var endOfDay = new Date();
+      //  endOfDay.setHours(endHour);
+      //  endOfDay.setMinutes(endMinute);
+      //  endOfDay.setSeconds(0);
+   
+       var startOfDay = new Date(date);
+       startOfDay.setDate(startOfDay.getDate() + 1);
+       startOfDay.setHours(8);
+       startOfDay.setMinutes(30);
+       startOfDay.setSeconds(0);
+
+
+      var midniteMilli = midnite.getTime();
+      var dateMilli = date.getTime();
+      var startMilli = startOfDay.getTime();
+
+
+   
+      //  var timeLeftTodayInMinutes = ((Math.abs(midnite.getTime() - date.getTime()) / 1000) / 60);
+       var timeLeftTodayInHours = ((Math.abs(midniteMilli - dateMilli) / 1000) / 60) / 60;
+   
+      //  var timeLeftTomorrowInMinutes = ((Math.abs(startOfDay.getTime() - midnite.getTime()) / 1000) / 60);
+       var timeLeftTomorrowInHours = ((Math.abs(startMilli - midniteMilli) / 1000) / 60) / 60;
+   
+       console.log(`Time between endOfDay and midnite
+         in Hours: ${timeLeftTodayInHours}
+   
+         Time between midnite and startOfDay
+         in Hours: ${timeLeftTomorrowInHours}
+   
+         Amount of time before tomorrow Morning
+         ${timeLeftTodayInHours + timeLeftTomorrowInHours}
+       `);
+
+       return (timeLeftTodayInHours + timeLeftTomorrowInHours);
+   
+   
+       /**
+        * ↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑ TODD'S TIME CALCULATION
+        */
+}
