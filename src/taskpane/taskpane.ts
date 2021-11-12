@@ -782,6 +782,12 @@ async function tryCatch(callback) {
   };
   //#endregion --------------------------------------------------------------------------------------------------
 
+  // Gets the day of the week
+  function dayOfWeek(d) { //finds the day of the week
+    var day = d.getDay();
+    return day;
+  }
+
   //#region OFFICE HOURS WORK ---------------------------------------------------------------------------------------
   /**
    * Adjusts a date object so that it falls into office hours
@@ -791,11 +797,14 @@ async function tryCatch(callback) {
   function officeHoursWork(date, hoursAdjust, originalDate) {
     var endHour;
     var endMinute;
+    var startHour;
+    var startMinute;
 
-    function dayOfWeek(d) {
-      var day = d.getDay();
-      return day;
-    }
+    // function dayOfWeek(d) { //finds the day of the week
+    //   var day = d.getDay();
+    //   return day;
+    // }
+  
 
     var originalDayOfWeek = dayOfWeek(originalDate);
     var adjustedDayOfWeek = dayOfWeek(date);
@@ -809,44 +818,47 @@ async function tryCatch(callback) {
     };
 
 
-    var h = date.getHours(); // 6
-    var m = date.getMinutes(); // 17
-    var originalH = originalDate.getHours(); //14
-    var originalM = originalDate.getMinutes(); //17
+
+
+    var h = date.getHours(); // 12
+    var m = date.getMinutes(); // 30
+    var originalH = originalDate.getHours(); //9
+    var originalM = originalDate.getMinutes(); //30
     var remainderHour;
     var remainderMinutes;
 
 
-    
-    var hoursToEnd = 24 - endHour; //7
-    var minutesToEnd = 0; //0
+    var withinOfficeHours = true;
 
-    if (endMinute > 0) {
-      hoursToEnd = hoursToEnd - 1;
-      minutesToEnd = minutesToEnd + endMinute;
-    }; //hoursToEnd = 6 & minutesToEnd = 30
 
-    var hoursToNextDay = hoursToEnd + 8; //14
-    var minutesToNextDay = minutesToEnd + 30; //60
+    while (withinOfficeHours == true) {
 
-    if (minutesToNextDay > 59) {
-      hoursToNextDay = hoursToNextDay + 1;
-      minutesToNextDay = minutesToNextDay -60;
-    } //hoursToNextDay = 15 & minutesToNextDay = 0
+      var hoursToEnd = 24 - endHour; //number of hours between end of work day and end of actual day (12:00 [24] - 5:00 [17] on most days) //7
+      var minutesToEnd = 0; //amount of minutes will be calculated later since this affects the hours in most cases
 
-    var hoursToAdd = hoursToNextDay + hoursAdjust; //15 + 16 = 31
-    var minutesToAdd = minutesToNextDay; //0 (I have this here just in case there ever comes a time that hoursAdjust returns a decimal, in whihc case I will need to rework some of this to convert the decimal into minutes)
-    var adjustedDate = new Date(originalDate);
+      if (endMinute > 0) { //if office hours end at anytime other than on the hour, do this...
+        hoursToEnd = hoursToEnd - 1; //subracts 1 hour from hoursToEnd (since we are adding in the minutes and are essentially counting backwards at this point)
+        minutesToEnd = minutesToEnd + endMinute; //adds endMinute [30] to minutesToEnd [0]
+      }; //hoursToEnd = 6 & minutesToEnd = 30
 
-    adjustedDate.setHours(adjustedDate.getHours() + hoursToAdd); //14 (2:00PM) + 31 (9:00PM next day)
-    adjustedDate.setMinutes(adjustedDate.getMinutes() + minutesToAdd); //17 (2:17) + 0 = 17 (9:17PM next day)
+      var hoursToNextDay = hoursToEnd + 8; //assuming start time everyday is at hour[8], adds the amount of time between office hours end and end of day to end of day and beginning of office hours
+      var minutesToNextDay = minutesToEnd + 30; //assuming start time everyday is at minute[30], add the minutes to end to the start minutes [30]
 
-    var withinOfficeHours;
+      if (minutesToNextDay > 59) { //if minutes goes into the hours terittory, we need to covert the hours and minutes to make visual sense
+        hoursToNextDay = hoursToNextDay + 1;
+        minutesToNextDay = minutesToNextDay -60;
+      } //hoursToNextDay = 15 & minutesToNextDay = 0
 
-    while (withinOfficeHours = false) {
+      var hoursToAdd = hoursToNextDay + hoursAdjust; //adds hoursToNextDay (time between end of office and beginning of office next day) to adjustment hours
+      var minutesToAdd = minutesToNextDay; //retuns the minutesToNextDay variable (if we anticipate the hoursAdjust ever returning minutes as well, we will add to this variable)
+      var adjustedDate = new Date(originalDate);
+
+      adjustedDate.setHours(adjustedDate.getHours() + hoursToAdd); //14 (2:00PM) + 31 (9:00PM next day)
+      adjustedDate.setMinutes(adjustedDate.getMinutes() + minutesToAdd); //17 (2:17) + 0 = 17 (9:17PM next day)
+
 
       if (((adjustedDate.getHours() < endHour) || (adjustedDate.getHours() == endHour && adjustedDate.getMinutes() < 30)) || ((adjustedDate.getHours() > 8) || (adjustedDate.getHours() == 8 && adjustedDate.getMinutes() > 30))) {
-        withinOfficeHours = true;
+        withinOfficeHours = false;
       };
 
       
