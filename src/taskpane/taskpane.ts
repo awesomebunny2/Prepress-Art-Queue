@@ -671,29 +671,29 @@ async function tryCatch(callback) {
     function workPrePreAdjust (rowValues, workHoursAdjust, override) {
       var workOverride = rowValues[0][21]; //gets values of Work Orverride cell
       // console.log(workOverride);
-      var snake = workHoursAdjust + workOverride; //adds start override value to the number of hours for the project type
-      var snakeFake = new Date(override); //sets snakeFake to startedPickedUpBy as a new date variable (so the old date doesnt get changed)
-      var shark = new Date(snakeFake);
-      shark.setHours(shark.getHours() + snake); //adds snake hours to startedPickedUpBy date
+      var workManualAdjust = workHoursAdjust + workOverride; //adds start override value to the number of hours for the project type
+      var overrideCopy = new Date(override); //sets overrideCopy to startedPickedUpBy as a new date variable (so the old date doesnt get changed)
+      var datePreHoursAdjust = new Date(overrideCopy);
+      datePreHoursAdjust.setHours(datePreHoursAdjust.getHours() + workManualAdjust); //adds workManualAdjust hours to startedPickedUpBy date
 
-      var newVar = timeBetweenDateAndTomorrowMorning(snakeFake);
-      // How many hours between newVar and the next day at 8:30am 
+      var adjustedDateTime = officeHoursWork(datePreHoursAdjust, workManualAdjust, overrideCopy);
+      // How many hours between adjustedDateTime and the next day at 8:30am 
 
-      console.log(newVar)
+      console.log(adjustedDateTime)
 
-      if (newVar > 15 && newVar < 24) {
-        // It's before 5:30PM & 8:30AM
-        console.log(`snakeFake is between 5:30PM & 8:30AM`)
-      } else if (newVar < 15) {
-        // It's past 5:30
-        console.log(`snakeFake is  past 5:30PM`)
-      }
+      // if (adjustedDateTime > 15 && adjustedDateTime < 24) {
+      //   // It's before 5:30PM & 8:30AM
+      //   console.log(`workManualAdjustFake is between 5:30PM & 8:30AM`)
+      // } else if (adjustedDateTime < 15) {
+      //   // It's past 5:30
+      //   console.log(`workManualAdjustFake is  past 5:30PM`)
+      // }
 
 
 
-      var sharkBait = officeHoursWork(shark, snake, override); //converts to be within office hours if it already isn't
-      var oHaAh = weekendAdjust(sharkBait); //converts to be a weekday if it already isn't
-      return oHaAh;
+      // var sharkBait = officeHoursWork(datePreHoursAdjust, workManualAdjust, override); //converts to be within office hours if it already isn't
+      var dateWeekendAdjusted = weekendAdjust(adjustedDateTime); //converts to be a weekday if it already isn't
+      return dateWeekendAdjusted;
     };
     //#endregion --------------------------------------------------------------------------------------------------
 
@@ -806,16 +806,9 @@ async function tryCatch(callback) {
     // }
   
 
-    var originalDayOfWeek = dayOfWeek(originalDate);
-    var adjustedDayOfWeek = dayOfWeek(date);
+  
 
-    if (adjustedDayOfWeek == 5) { //if day of week is Friday, set end of office hours to 1:30PM, otherwise office hours end at 5:30PM
-      endHour = 13;
-      endMinute = 30;
-    } else {
-      endHour = 17;
-      endMinute = 30;
-    };
+   
 
 
 
@@ -827,39 +820,74 @@ async function tryCatch(callback) {
     var remainderHour;
     var remainderMinutes;
 
+    var aNum = 0;
+
 
     var withinOfficeHours = true;
 
 
     while (withinOfficeHours == true) {
 
-      var hoursToEnd = 24 - endHour; //number of hours between end of work day and end of actual day (12:00 [24] - 5:00 [17] on most days) //7
-      var minutesToEnd = 0; //amount of minutes will be calculated later since this affects the hours in most cases
+      if (aNum > 0) {
+        // Not first pass ↓
+        originalDate = date;
+      };
 
-      if (endMinute > 0) { //if office hours end at anytime other than on the hour, do this...
-        hoursToEnd = hoursToEnd - 1; //subracts 1 hour from hoursToEnd (since we are adding in the minutes and are essentially counting backwards at this point)
-        minutesToEnd = minutesToEnd + endMinute; //adds endMinute [30] to minutesToEnd [0]
-      }; //hoursToEnd = 6 & minutesToEnd = 30
+        var adjustedDayOfWeek = dayOfWeek(date);
 
-      var hoursToNextDay = hoursToEnd + 8; //assuming start time everyday is at hour[8], adds the amount of time between office hours end and end of day to end of day and beginning of office hours
-      var minutesToNextDay = minutesToEnd + 30; //assuming start time everyday is at minute[30], add the minutes to end to the start minutes [30]
+        if (adjustedDayOfWeek == 5) { //if day of week is Friday, set end of office hours to 1:30PM, otherwise office hours end at 5:30PM
+          endHour = 13;
+          endMinute = 30;
+        } else {
+          endHour = 17;
+          endMinute = 30;
+        };
 
-      if (minutesToNextDay > 59) { //if minutes goes into the hours terittory, we need to covert the hours and minutes to make visual sense
-        hoursToNextDay = hoursToNextDay + 1;
-        minutesToNextDay = minutesToNextDay -60;
-      } //hoursToNextDay = 15 & minutesToNextDay = 0
+        var hoursToEnd = 24 - endHour; //number of hours between end of work day and end of actual day (12:00 [24] - 5:00 [17] on most days) //7
+        var minutesToEnd = 0; //amount of minutes will be calculated later since this affects the hours in most cases
 
-      var hoursToAdd = hoursToNextDay + hoursAdjust; //adds hoursToNextDay (time between end of office and beginning of office next day) to adjustment hours
-      var minutesToAdd = minutesToNextDay; //retuns the minutesToNextDay variable (if we anticipate the hoursAdjust ever returning minutes as well, we will add to this variable)
+        if (endMinute > 0) { //if office hours end at anytime other than on the hour, do this...
+          hoursToEnd = hoursToEnd - 1; //subracts 1 hour from hoursToEnd (since we are adding in the minutes and are essentially counting backwards at this point)
+          minutesToEnd = minutesToEnd + endMinute; //adds endMinute [30] to minutesToEnd [0]
+        }; //hoursToEnd = 6 & minutesToEnd = 30
+
+        var hoursToNextDay = hoursToEnd + 8; //assuming start time everyday is at hour[8], adds the amount of time between office hours end and end of day to end of day and beginning of office hours
+        var minutesToNextDay = minutesToEnd + 30; //assuming start time everyday is at minute[30], add the minutes to end to the start minutes [30]
+
+        if (minutesToNextDay > 59) { //if minutes goes into the hours terittory, we need to covert the hours and minutes to make visual sense
+          hoursToNextDay = hoursToNextDay + 1;
+          minutesToNextDay = minutesToNextDay -60;
+        } //hoursToNextDay = 15 & minutesToNextDay = 0
+
+        var hoursToAdd = hoursToNextDay + hoursAdjust; //adds hoursToNextDay (time between end of office and beginning of office next day) to adjustment hours
+        var minutesToAdd = minutesToNextDay; //retuns the minutesToNextDay variable (if we anticipate the hoursAdjust ever returning minutes as well, we will add to this variable)
+        date = new Date(originalDate);
+
+        date.setHours(date.getHours() + hoursToAdd); //14 (2:00PM) + 31 (9:00PM next day)
+        date.setMinutes(date.getMinutes() + minutesToAdd); //17 (2:17) + 0 = 17 (9:17PM next day)
+
+
+
+        if (((date.getHours() < endHour) || (date.getHours() == endHour && date.getMinutes() < 30)) && ((date.getHours() > 8) || (date.getHours() == 8 && date.getMinutes() > 30))) {
+            withinOfficeHours = false;
+        }
+
+        aNum++;
+
+
+      /*
       var adjustedDate = new Date(originalDate);
 
       adjustedDate.setHours(adjustedDate.getHours() + hoursToAdd); //14 (2:00PM) + 31 (9:00PM next day)
       adjustedDate.setMinutes(adjustedDate.getMinutes() + minutesToAdd); //17 (2:17) + 0 = 17 (9:17PM next day)
 
 
-      if (((adjustedDate.getHours() < endHour) || (adjustedDate.getHours() == endHour && adjustedDate.getMinutes() < 30)) || ((adjustedDate.getHours() > 8) || (adjustedDate.getHours() == 8 && adjustedDate.getMinutes() > 30))) {
-        withinOfficeHours = false;
-      };
+      if (((adjustedDate.getHours() < endHour) || (adjustedDate.getHours() == endHour && adjustedDate.getMinutes() < 30)) && ((adjustedDate.getHours() > 8) || (adjustedDate.getHours() == 8 && adjustedDate.getMinutes() > 30)))
+        {
+          withinOfficeHours = false;
+        } else 
+
+      */
 
       
     };
@@ -1042,64 +1070,3 @@ async function tryCatch(callback) {
   //#endregion ------------------------------------------------------------------------------------------------------
 
 //#endregion -----------------------------------------------------------------------------------------------------
-
-
-function timeBetweenDateAndTomorrowMorning(date) {
-
-
-    // if (typeof date !== "date") {
-    //   console.log("That wasn't a date!");
-    //   return;
-    // }
-
-    /**
-     * ↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓ TODD'S TIME CALCULATION
-     */
-       console.log("Linked!")
-       var midnite = new Date(date);
-       midnite.setDate(midnite.getDate() + 1)
-       midnite.setHours(0);
-       midnite.setMinutes(0);
-       midnite.setSeconds(0);
-   
-      //  var endOfDay = new Date();
-      //  endOfDay.setHours(endHour);
-      //  endOfDay.setMinutes(endMinute);
-      //  endOfDay.setSeconds(0);
-   
-       var startOfDay = new Date(date);
-       startOfDay.setDate(startOfDay.getDate() + 1);
-       startOfDay.setHours(8);
-       startOfDay.setMinutes(30);
-       startOfDay.setSeconds(0);
-
-
-      var midniteMilli = midnite.getTime();
-      var dateMilli = date.getTime();
-      var startMilli = startOfDay.getTime();
-
-
-   
-      //  var timeLeftTodayInMinutes = ((Math.abs(midnite.getTime() - date.getTime()) / 1000) / 60);
-       var timeLeftTodayInHours = ((Math.abs(midniteMilli - dateMilli) / 1000) / 60) / 60;
-   
-      //  var timeLeftTomorrowInMinutes = ((Math.abs(startOfDay.getTime() - midnite.getTime()) / 1000) / 60);
-       var timeLeftTomorrowInHours = ((Math.abs(startMilli - midniteMilli) / 1000) / 60) / 60;
-   
-       console.log(`Time between endOfDay and midnite
-         in Hours: ${timeLeftTodayInHours}
-   
-         Time between midnite and startOfDay
-         in Hours: ${timeLeftTomorrowInHours}
-   
-         Amount of time before tomorrow Morning
-         ${timeLeftTodayInHours + timeLeftTomorrowInHours}
-       `);
-
-       return (timeLeftTodayInHours + timeLeftTomorrowInHours);
-   
-   
-       /**
-        * ↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑ TODD'S TIME CALCULATION
-        */
-}
