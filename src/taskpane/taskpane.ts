@@ -556,6 +556,18 @@ async function tryCatch(callback) {
 
     function startPreAdjust(rowValues, projectTypeHours, myDate) {
       var startOverride = rowValues[0][20]; //gets values of Start Orverride cell
+      var startManualOverride = projectTypeHours + startOverride; //adds start override value to the number of hours for the project type
+      var myDateCopy = new Date(myDate); //sets myDateCopy to myDate as a new date variable (so the old date doesnt get changed)
+      var datePreHoursAdjust = new Date(myDateCopy);
+      datePreHoursAdjust.setHours(datePreHoursAdjust.getHours() + startManualOverride);; //adds startManualOverride hours to myDate
+      // console.log(datePreHoursAdjust);
+      var adjustedDateTime = officeHours(datePreHoursAdjust, startManualOverride, myDateCopy); //converts to be within office hours if it already isn't
+      var dateWeekendAdjusted = weekendAdjust(adjustedDateTime); //converts to be a weekday if it already isn't
+      return dateWeekendAdjusted;
+    }
+    /*
+    function startPreAdjust(rowValues, projectTypeHours, myDate) {
+      var startOverride = rowValues[0][20]; //gets values of Start Orverride cell
       var snail = projectTypeHours + startOverride; //adds start override value to the number of hours for the project type
       var snailFail = new Date(myDate); //sets snailFail to myDate as a new date variable (so the old date doesnt get changed)
       snailFail.setHours(snailFail.getHours() + snail);; //adds snail hours to myDate
@@ -564,6 +576,7 @@ async function tryCatch(callback) {
       var snailFlail = weekendAdjust(snailMail); //converts to be a weekday if it already isn't
       return snailFlail;
     }
+    */
     //#endregion ----------------------------------------------------------------------------------------------------
 
     //#region STARTED PICKED UP BY ---------------------------------------------------------------------------------
@@ -676,7 +689,7 @@ async function tryCatch(callback) {
       var datePreHoursAdjust = new Date(overrideCopy);
       datePreHoursAdjust.setHours(datePreHoursAdjust.getHours() + workManualAdjust); //adds workManualAdjust hours to startedPickedUpBy date
 
-      var adjustedDateTime = officeHoursWork(datePreHoursAdjust, workManualAdjust, overrideCopy);
+      var adjustedDateTime = officeHours(datePreHoursAdjust, workManualAdjust, overrideCopy);
       // How many hours between adjustedDateTime and the next day at 8:30am 
 
       console.log(adjustedDateTime)
@@ -740,6 +753,7 @@ async function tryCatch(callback) {
    * @param {Date} date Date to be adjusted to the start of office hours
    * @returns Date
    */
+  /*
   function officeHoursStart(date) {
     var h = date.getHours(); // 14
     var m = date.getMinutes(); // 17
@@ -781,6 +795,7 @@ async function tryCatch(callback) {
       return date;
   };
   //#endregion --------------------------------------------------------------------------------------------------
+  */
 
   // Gets the day of the week
   function dayOfWeek(d) { //finds the day of the week
@@ -788,13 +803,13 @@ async function tryCatch(callback) {
     return day;
   }
 
-  //#region OFFICE HOURS WORK ---------------------------------------------------------------------------------------
+  //#region OFFICE HOURS ---------------------------------------------------------------------------------------
   /**
    * Adjusts a date object so that it falls into office hours
    * @param {Date} date Date to be adjusted to the start of office hours
    * @returns Date
    */
-  function officeHoursWork(date, hoursAdjust, originalDate) {
+  function officeHours(date, hoursAdjust, originalDate) {
     var endHour;
     var endMinute;
     var startHour;
@@ -804,14 +819,6 @@ async function tryCatch(callback) {
     //   var day = d.getDay();
     //   return day;
     // }
-  
-
-  
-
-   
-
-
-
 
     var h = date.getHours(); // 12
     var m = date.getMinutes(); // 30
@@ -1032,7 +1039,27 @@ async function tryCatch(callback) {
    * @param {Date} date Date to be adjusted to a weekday
    * @returns Date
    */
+
     function weekendAdjust(date) {
+    var h = date.getHours(); // 4
+    var m = date.getMinutes(); // 30
+    var dayOfWeek = date.getDay(); //get day of week from date
+    var adjustedDayOfWeek = dayOfWeek(date);
+
+    if (dayOfWeek == 6) { //if weekday = Saturday
+      var newDate = new Date(date);
+      newDate.setDate(newDate.getDate() + 2);
+      return newDate;
+    }
+
+    if (dayOfWeek == 0) { //if weekday = Sunday
+      var newDate = new Date(date);
+      newDate.setDate(newDate.getDate() + 1);
+      return newDate;
+    }
+  }
+/*
+  function weekendAdjust(date) {
     var h = date.getHours(); // 4
     var m = date.getMinutes(); // 30
     var dayOfWeek = date.getDay(); //get day of week from date
@@ -1067,6 +1094,7 @@ async function tryCatch(callback) {
       return date;
     }
   }
+  */
   //#endregion ------------------------------------------------------------------------------------------------------
 
 //#endregion -----------------------------------------------------------------------------------------------------
