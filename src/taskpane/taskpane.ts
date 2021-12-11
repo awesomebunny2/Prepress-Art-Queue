@@ -795,8 +795,9 @@ async function tryCatch(callback) {
 
   //#region OFFICE HOURS ---------------------------------------------------------------------------------------
     /**
-     * Adjusts a date object so that it falls into office hours
-     * @param {Date} date Date to be adjusted to the start of office hours
+     * Sets weekday variables and loops through the withinOfficeHours function, which adjusts the date to be within office hours
+     * @param {Date} date Date to be adjusted to be within office hours
+     * @param {Number} number Number of adjustment hours to add to date
      * @returns Date
      */
     function officeHours(day, number) {
@@ -819,16 +820,20 @@ async function tryCatch(callback) {
       loop = officeHours.loop;
       //aNum++
       };
-      console.log("The correct date & time is: " + day);
+      //console.log("The correct date & time is: " + day);
       loop = true;
       return day;
     };
 
       //#region FUNCTIONS -------------------------------------------------------------------------------------------------------------------------
 
-
         //#region WITHIN OFFICE HOURS FUNCTION -------------------------------------------------------------------------------------------------
-
+              /**
+               * Adjusts date to be within office hours while maintaining an accurate turn around time variable for the adjustment number
+               * @param {Date} date Date to be adjusted to be within office hours 
+               * @param {Number} adjustmentNumber Number of adjustment hours to add to date
+               * @returns An object with properties (date, adjustment number, and loop)
+               */
               function withinOfficeHours(date, adjustmentNumber) {
 
                 //#region VARIABLES ------------------------------------------------------------------------------------------------------------
@@ -899,34 +904,6 @@ async function tryCatch(callback) {
                     //#region SETS ADD A DAY VARIABLES -----------------------------------------------------------------------------------------
 
                         //gets day of the week attributes for the day after the date variable
-
-
-
-
-                        /** --------------------------------------------------------
-                         * .-. .-. .-. .-.   . . .-. .-. .-. .-. 
-                         *  |  | | |  )|  )  |\| | |  |  |-  `-. 
-                         *  '  `-' `-' `-'   ' ` `-'  '  `-' `-'
-                         *  You are using way to many "nextDay"s here.
-                         *  I fixed this error by creating a new variable
-                         *  "newNextDay", and assigning that to the output of
-                         *  getNextDay();
-                         --------------------------------------------------------
-                         ORIGINAL CODE:
-                         -------------------------------------------------------- */
-                        /*
-                            var nextDay = new Date(date);
-                            nextDay = getNextDay(nextDay); //also sets this variable to the start time of the next day
-                            var addADay = nextDay.nextDay;
-                            var addADayTitle = nextDay.nextDayTitle;
-                            var addADayMilli = addADay.getTime();
-                            
-                            //retrives workday variables associated with the weekday of the addADay variable
-                            var bookendAddedDate = startEndMidnight(addADay, addADayTitle);
-                        */
-                        /*  --------------------------------------------------------
-                          FIXED CODE:
-                          -------------------------------------------------------- */
                           var nextDay = new Date(date);
 
                           var newNextDay = getNextDay(nextDay); //also sets this variable to the start time of the next day
@@ -936,10 +913,6 @@ async function tryCatch(callback) {
                           
                           //retrives workday variables associated with the weekday of the addADay variable
                           var bookendAddedDate = startEndMidnight(addADay, addADayTitle);
-                        /*  -------------------------------------------------------- */
-
-
-
 
                     //#endregion ----------------------------------------------------------------------------------------------------------------
 
@@ -976,39 +949,9 @@ async function tryCatch(callback) {
                             //if the new date exceeds the office hours of addADay, then do this...
                             if (dateTimeAdjusted > bookendAddedDate.endOfWorkDayMilli) {
                                 adjustmentNumber = (remainingAdjust - addADayTitle.workDay) //subtracts remainingAdjust hours from the total workDay hours in the addADay variable
-                                
-
-                              /** --------------------------------------------------------
-                              *  .-. .-. .-. .-.   . . .-. .-. .-. .-. 
-                              *   |  | | |  )|  )  |\| | |  |  |-  `-. 
-                              *   '  `-' `-' `-'   ' ` `-'  '  `-' `-'
-                              *  Fixed by assigning the output of getNextDay to
-                              *  a new variable "newDayAfterTomorrow".
-                              * 
-                              *  This line seems a little silly to me.
-                              *  Reassigning an object to it's own property?
-                              *     
-                              *     dayAfterTomorrow = dayAfterTomorrow.nextDay;
-                              *     
-                              --------------------------------------------------------
-                              ORIGINAL CODE:
-                              -------------------------------------------------------- */
-                              /*
-                                var dayAfterTomorrow = new Date(addADay);
-                                dayAfterTomorrow = getNextDay(dayAfterTomorrow);
-                                dayAfterTomorrow = dayAfterTomorrow.nextDay;
-                                date = new Date(dayAfterTomorrow);
-                              */
-                              /*  --------------------------------------------------------
-                                FIXED CODE:
-                                -------------------------------------------------------- */
                                 var dayAfterTomorrow = new Date(addADay);
                                 var newDayAfterTomorrow = getNextDay(dayAfterTomorrow);
-                                // dayAfterTomorrow = dayAfterTomorrow.nextDay;
                                 date = new Date(newDayAfterTomorrow.nextDay);
-                              /* -------------------------------------------------------- */
-
-
                                 loop = true;
                                 return {
                                     date,
@@ -1045,6 +988,11 @@ async function tryCatch(callback) {
 
         //#region FIND WORK DAY FUNCTION -------------------------------------------------------------------------------------------------------
 
+          /**
+           * Returns the number of hours in a specific work day by subtracting the start from the end of the day, based on the properties loaded by the weekday variable
+           * @param {Object} weekday A weekday variable with all it's associated properties
+           * @returns Number
+           */
           function findWorkDay(weekday) {
 
               //sets start time for weekday variable to a date for calculations
@@ -1059,31 +1007,7 @@ async function tryCatch(callback) {
               end.setMinutes(weekday.endMinute);
               end.setSeconds(0);
 
-              
-              /** --------------------------------------------------------
-              *  .-. .-. .-. .-.   . . .-. .-. .-. .-. 
-              *   |  | | |  )|  )  |\| | |  |  |-  `-. 
-              *   '  `-' `-' `-'   ' ` `-'  '  `-' `-'
-              * 
-              *  Found insight here:
-              *  https://stackoverflow.com/questions/36560806/the-left-hand-side-of-an-arithmetic-operation-must-be-of-type-any-number-or
-              *  
-              *  "You can fix by explicitly making the operands number (bigint) types so the - works."
-              *  Fixed Example:
-              *  new Date("2020-03-15T00:47:38.813Z").valueOf() - new Date("2020-03-15T00:47:24.676Z").valueOf()
-              *  
-              --------------------------------------------------------
-              ORIGINAL CODE:
-              -------------------------------------------------------- */
-              /*
-                  var workDayTime = (((end - start) / 1000) / 60) / 60; //subtracts end of day from start of day to get total work day hours for that weekday, then converts the milliseconds into hours (with decimal for minutes, if any)
-              */
-              /*  --------------------------------------------------------
-                FIXED CODE:
-                -------------------------------------------------------- */
-                  var workDayTime = (((end.valueOf() - start.valueOf()) / 1000) / 60) / 60; //subtracts end of day from start of day to get total work day hours for that weekday, then converts the milliseconds into hours (with decimal for minutes, if any)
-              /*  -------------------------------------------------------- */
-
+              var workDayTime = (((end.valueOf() - start.valueOf()) / 1000) / 60) / 60; //subtracts end of day from start of day to get total work day hours for that weekday, then converts the milliseconds into hours (with decimal for minutes, if any)
 
               weekday.workDay = workDayTime; //sets our number to the variable 
 
@@ -1096,9 +1020,14 @@ async function tryCatch(callback) {
 
         //#region DAY OF WEEK FUNCTION ---------------------------------------------------------------------------------------------------------
 
+          /**
+           * Returns a number 0-6 (Sunday - Saturday) based on the date input
+           * @param {Date} d loads a date variable
+           * @returns Number
+           */
           function dayOfWeek(d) { //finds the day of the week
-          var day = d.getDay();
-          return day;
+            var day = d.getDay();
+            return day;
           };
 
         //#endregion ----------------------------------------------------------------------------------------------------------------------------------
@@ -1106,82 +1035,11 @@ async function tryCatch(callback) {
 
         //#region TITLE DAY OF WEEK FUNCTION ---------------------------------------------------------------------------------------------------
 
-        /*  
-        function titleDOW(d) { //returns the day of the week (refered to directly in another variable) based on the dayID index number
-            if (d == 0) {
-              var sunday = {
-                dayID: 0,
-                startHour: 8,
-                startMinute: 30,
-                endHour: 17,
-                endMinute: 30,
-                workDay: 0,
-              }
-              return sunday;
-            } else if (d == 1) {
-              var monday = {
-                dayID: 1,
-                startHour: 8,
-                startMinute: 0,
-                endHour: 17,
-                endMinute: 0,
-                workDay: 0,
-              }
-              return monday;
-            } else if (d == 2) {
-              var tuesday = {
-                dayID: 2,
-                startHour: 8,
-                startMinute: 30,
-                endHour: 17,
-                endMinute: 30,
-                workDay: 0,
-              }
-              return tuesday;
-            } else if (d == 3) {
-              var wednesday = {
-                dayID: 3,
-                startHour: 8,
-                startMinute: 30,
-                endHour: 17,
-                endMinute: 30,
-                workDay: 0,
-              }
-              return wednesday;
-            } else if (d == 4) {
-              var thursday = {
-                dayID: 4,
-                startHour: 8,
-                startMinute: 0,
-                endHour: 18,
-                endMinute: 0,
-                workDay: 0,
-              }
-              return thursday;
-            } else if (d == 5) {
-              var friday = {
-                dayID: 5,
-                startHour: 8,
-                startMinute: 30,
-                endHour: 13,
-                endMinute: 30,
-                workDay: 0,
-              }
-              return friday;
-            } else if (d == 6) {
-              var saturday = {
-                dayID: 6,
-                startHour: 8,
-                startMinute: 30,
-                endHour: 17,
-                endMinute: 30,
-                workDay: 0,
-              }
-              return saturday;
-            };
-          };
-          */
-
+          /**
+           * Returns the weekday variable, with all it's associated properties, from the weekday index input value
+           * @param {Number} d The indexed number (0-6) of the weekday
+           * @returns An object with properties
+           */
           function titleDOW(d) { //returns the day of the week (refered to directly in another variable) based on the dayID index number
             if (d == 0) {
               return sunday;
@@ -1204,7 +1062,13 @@ async function tryCatch(callback) {
 
 
         //#region START/END/MIDNIGHT FUNCTION --------------------------------------------------------------------------------------------------
-
+          
+          /**
+           * Sets start of work day, end of work day, and midnight to a date variable (including millisecond versions), returning an object with specific properties for each
+           * @param {Date} originalDate A date variable (in this case, the date before any alterations)
+           * @param {object} weekday A weekday variable with all its associated properties
+           * @returns An object with properties
+           */
           function startEndMidnight(originalDate, weekday) {
 
               var startOfWorkDay = new Date(originalDate); //adjusts start time of work day based on the day of the week
@@ -1241,40 +1105,18 @@ async function tryCatch(callback) {
 
         //#region GET NEXT DAY FUNCTION --------------------------------------------------------------------------------------------------------
 
+          /**
+           * Adds a day to the date variable and sets it to the start time of that new day's day of the week. Also adjusts for weekends if needed.
+           * @param {Date} date A date object
+           * @returns An object with properties
+           */
           function getNextDay(date) {
 
-              /** --------------------------------------------------------
-              *  .-. .-. .-. .-.   . . .-. .-. .-. .-. 
-              *   |  | | |  )|  )  |\| | |  |  |-  `-. 
-              *   '  `-' `-' `-'   ' ` `-'  '  `-' `-'
-              * 
-              *  Created a new variable "newNextDay" and assigned it to the
-              *  output of nextDay.setDate(nextDay.getDate() + 1);
-              *  Then made nextDay the new Date() from newNextDay
-              * 
-              * This code can be cleaned up I think. Lots of Date object
-              * floating around and being coerced into other Date objects
-              *  
-              --------------------------------------------------------
-              ORIGINAL CODE:
-              -------------------------------------------------------- */
-              /*
-                var nextDay = new Date(date);
-                nextDay = nextDay.setDate(nextDay.getDate() + 1); //returns the day after the original date
-                nextDay = new Date(nextDay);
-                var nextDayDayOfWeek = dayOfWeek(nextDay);
-                var nextDayTitle = titleDOW(nextDayDayOfWeek); //returns a day title based on the dayID of the addADay variable              */
-              /*  --------------------------------------------------------
-                FIXED CODE:
-                -------------------------------------------------------- */
-                var nextDay = new Date(date);
-                var newNextDay = nextDay.setDate(nextDay.getDate() + 1); //returns the day after the original date
-                nextDay = new Date(newNextDay);
-                var nextDayDayOfWeek = dayOfWeek(nextDay);
-                var nextDayTitle = titleDOW(nextDayDayOfWeek); //returns a day title based on the dayID of the addADay variable
-              /*  -------------------------------------------------------- */
-
-              
+            var nextDay = new Date(date);
+            var newNextDay = nextDay.setDate(nextDay.getDate() + 1); //returns the day after the original date
+            nextDay = new Date(newNextDay);
+            var nextDayDayOfWeek = dayOfWeek(nextDay);
+            var nextDayTitle = titleDOW(nextDayDayOfWeek); //returns a day title based on the dayID of the addADay variable
 
               if ((nextDayDayOfWeek == 6) || (nextDayDayOfWeek == 0)) { //checks if nextDay falls on a weekend
                   nextDay = weekendAdjust(nextDay, nextDayDayOfWeek); //adjusts nextDay output to not fall on a weekend
@@ -1296,379 +1138,27 @@ async function tryCatch(callback) {
 
         //#region WEEKEND ADJUST FUNCTION ------------------------------------------------------------------------------------------------------
           
-function weekendAdjust(date, dateWeekday) {
-  if (dateWeekday == 6) {
-      var weekend = new Date(date);
-      weekend.setDate(weekend.getDate() + 2);
-      return weekend;
-  } else if (dateWeekday == 0) {
-      var weekend = new Date(date);
-      weekend.setDate(weekend.getDate() + 1);
-      return weekend;
-  };
-};
+          /**
+           * If input date falls on a weekend, returns a new date adjusted to start on the next upcoming Monday
+           * @param {Date} date A date variable
+           * @param {Number} dateWeekday A number indexed 0-6 representing the weekday of the date variable
+           * @returns Date
+           */
+          function weekendAdjust(date, dateWeekday) {
+            if (dateWeekday == 6) {
+                var weekend = new Date(date);
+                weekend.setDate(weekend.getDate() + 2);
+                return weekend;
+            } else if (dateWeekday == 0) {
+                var weekend = new Date(date);
+                weekend.setDate(weekend.getDate() + 1);
+                return weekend;
+            };
+          };
 
-//#endregion ------------------------------------------------------------------------------------------------------------------------------
+        //#endregion ------------------------------------------------------------------------------------------------------------------------------
 
 
       //#endregion -------------------------------------------------------------------------------------------------------------------------------
 
-  //#endregion ---------------------------------------------------------------------------------------------------
-
-
-
-
-
-
-
-//OLD OFFICE HOURS REFERENCE!!!!!!!!!!!!!!!!!!!!!!!! _down _down 
-
-//#region OFFICE HOURS ---------------------------------------------------------------------------------------
-  /**
-   * Adjusts a date object so that it falls into office hours
-   * @param {Date} date Date to be adjusted to the start of office hours
-   * @returns Date
-   */
-
-/*
-   function officeHours(date, hoursAdjust, originalDate) {
-    var endHour;
-    var endMinute;
-    var startHour;
-    var startMinute;
-
-    // function dayOfWeek(d) { //finds the day of the week
-    //   var day = d.getDay();
-    //   return day;
-    // }
-
-    var h = date.getHours(); // 12
-    var m = date.getMinutes(); // 30
-    var originalH = originalDate.getHours(); //9
-    var originalM = originalDate.getMinutes(); //30
-    var startHour;
-    var startMinutes;
-
-    var aNum = 0;
-
-
-    var withinOfficeHours = true;
-
-
-    while (withinOfficeHours == true) {
-
-      if (aNum > 0) {
-        // Not first pass ↓
-        originalDate = date;
-      };
-
-        var adjustedDayOfWeek = dayOfWeek(date);
-
-        if (adjustedDayOfWeek == 5) { //if day of week is Friday, set office hours to 8:30 - 1:30
-          startHour = 8;
-          startMinutes = 30;
-          endHour = 13;
-          endMinute = 30;
-        } else if (adjustedDayOfWeek == 1) { //if day of week is Monday, set office hours to 8:00 - 5:00
-          startHour = 8;
-          startMinutes = 0;
-          endHour = 17;
-          endMinute = 0;
-        } else if (adjustedDayOfWeek == 4) { //if day of week is Thursday, set office hours to 8:00 - 6:00
-          startHour = 8;
-          startMinutes = 0;
-          endHour = 18;
-          endMinute = 0;
-        } else { //for all other days of the week, set office hours to 8:30 - 5:30
-          startHour = 8;
-          startMinutes = 30;
-          endHour = 17;
-          endMinute = 30;
-        }
-
-        var monday = {
-          dayID: 1,
-          startHour: 8,
-          startMinute: 0,
-          endHour: 17,
-          endMinute: 0,
-          workDay: endHour - startHour
-        }
-
-
-
-        var h = date.getHours(); // 12
-        var m = date.getMinutes(); // 30
-
-        //if time of date falls in the evening, do this...
-        if (h > endHour || h == endHour && m > endMinute) { 
-          //calculates amount of time between end of office hours and end of day
-          var hoursToEnd = 24 - endHour; //number of hours between end of work day and end of actual day (12:00 [24] - 5:00 [17] on most days) //7
-          var minutesToEnd = 0; //amount of minutes will be calculated later since this affects the hours in most cases
-
-          if (endMinute > 0) { //if office hours end at anytime other than on the hour, do this...
-            hoursToEnd = hoursToEnd - 1; //subracts 1 hour from hoursToEnd (since we are adding in the minutes and are essentially counting backwards at this point)
-            minutesToEnd = minutesToEnd + endMinute; //adds endMinute [30] to minutesToEnd [0]
-          }; //hoursToEnd = 6 & minutesToEnd = 30
-
-          var hoursToNextDay = hoursToEnd + 8; //assuming start time everyday is at hour[8], adds the amount of time between office hours end and end of day to end of day and beginning of office hours
-          var minutesToNextDay = minutesToEnd + 30; //assuming start time everyday is at minute[30], add the minutes to end to the start minutes [30]
-  
-          if (minutesToNextDay > 59) { //if minutes goes into the hours terittory, we need to covert the hours and minutes to make visual sense
-            hoursToNextDay = hoursToNextDay + 1;
-            minutesToNextDay = minutesToNextDay -60;
-          } //hoursToNextDay = 15 & minutesToNextDay = 0
-  
-          var hoursToAdd = hoursToNextDay + hoursAdjust; //adds hoursToNextDay (time between end of office and beginning of office next day) to adjustment hours
-          var minutesToAdd = minutesToNextDay; //retuns the minutesToNextDay variable (if we anticipate the hoursAdjust ever returning minutes as well, we will add to this variable)
-          date = new Date(originalDate);
-  
-          date.setHours(date.getHours() + hoursToAdd); //14 (2:00PM) + 31 (9:00PM next day)
-          date.setMinutes(date.getMinutes() + minutesToAdd); //17 (2:17) + 0 = 17 (9:17PM next day)
-        } 
-
-        //if time of date falls in the morning, do this...
-        else if (h < 8 || h == 8 && m < 30) {
-          var hourToNextDay = 8 - h; //assuming start time everyday is at hour[8], subtracts the amount of time between beginning of office hours and the number of hours returned from the date variable
-          var minuteToNextDay = m; //returns the minutes from the date variable
-          startMinute = 30; //REMOVE ONCE START TIME VARIABLES ARE INPLAMENTED
-
-          if (startMinute > 0) { //if time from date variable is at anytime other than on the hour, do this...
-            hourToNextDay = hourToNextDay - 1; //6
-            minuteToNextDay = 60 - minuteToNextDay; //60-17 = 43
-
-            // minuteToNextDay = minuteToNextDay + 30 + m; //43+30+17=90
-          }
-
-
-
-        }
-
-      
-
-
-
-        if (((date.getHours() < endHour) || (date.getHours() == endHour && date.getMinutes() < 30)) && ((date.getHours() > 8) || (date.getHours() == 8 && date.getMinutes() > 30))) {
-            withinOfficeHours = false;
-        }
-
-        aNum++;
-
-
-
-      /*
-      var adjustedDate = new Date(originalDate);
-
-      adjustedDate.setHours(adjustedDate.getHours() + hoursToAdd); //14 (2:00PM) + 31 (9:00PM next day)
-      adjustedDate.setMinutes(adjustedDate.getMinutes() + minutesToAdd); //17 (2:17) + 0 = 17 (9:17PM next day)
-
-
-      if (((adjustedDate.getHours() < endHour) || (adjustedDate.getHours() == endHour && adjustedDate.getMinutes() < 30)) && ((adjustedDate.getHours() > 8) || (adjustedDate.getHours() == 8 && adjustedDate.getMinutes() > 30)))
-        {
-          withinOfficeHours = false;
-        } else 
-
-      */
-
-      
-   // };
-
-    //return date;
-
-
-
-    // var theRemainders = findingRemainders(h, m, endHour, endMinute, originalH, originalM); //finds the remainder from the end of day to the pick up time
-    // // theRemainders = [remainderHour, remainderMinutes]
-
-
-    // var newHoursAdjust = adj(theRemainders[0], theRemainders[1], hoursAdjust); //subtracts theRemainders from the hoursAdjust
-    // // adjustedRemainder = [remainingHours, remainingMinutes];
-    // var addToStartHours = hoursToNextDay + newHoursAdjust[0]; //15+12 = 27
-    // var addToStartMinutes = 30 + newHoursAdjust[1]; //30+47 = 77
-
-    // if (addToStartMinutes > 59) {
-    //   addToStartHours + 1;
-    //   addToStartMinutes - 60;
-    // }; //startHours = 28 & startMinutes = 17
-
-    // var adjustedDate = new Date(originalDate);
-
-    // adjustedDate.setHours(originalDate.getHours() + addToStartHours); //14 (2:00) + 28 = 6:00PM next day
-    // adjustedDate.setMinutes(originalDate.getMinutes() + addToStartMinutes); //17 (2:17) + 17 = 34 (6:34PM next day)
-
-
-
-    // date.setDate(date.getDate() + 1); //add 1 day to the date
-    // date.setHours(8 + ); //set hour to 8:00AM + remainderHours
-    // date.setMinutes(30 + remainderMinutes); //set minutes to 30 + remainderMinutes
-    // var newHours = date.getHours();
-    // var newMinutes = date.getMinutes();
-
-    // for (var i = 0; i < ?; i++) {
-    // findingRemainders(newHours, newMinutes, endHour, endMinute, h, m);
-    // remainders(remainderHour, remainderMinutes, hoursAdjust);
-    // // afterHoursRepeat(newHours, newMinutes); //if the new date is still 
-    // };
-
-
-
-    // if (h < 8 || (h == 8 && m < 30)) { //if the adjusted time falls before office hours...
-
-    // }
-
-
-
-
-    //need to find the remainder from the end of day to the pick up time = var remainder
-    //need to subtract the remainder time from the hoursAdjust = newHoursAdjust
-    //need to find the amount of time between the end of day and the beginning of next day = var outOfOfficeTime
-    //need to add add the newHoursAdjust time to the outOfOfficeTime = totalTimeToAdd
-    //need to add totalTimeToAdd to pick up time
-
-
-
-
-
-
-      // // Morning
-      // if (h < 8) { //if hours is before 8, set hours to 8 and minutes to 30.
-      //   date.setHours(8 + remainingHours);
-      //   date.setMinutes(30 + remainingMinutes);
-      // }
-      // if (h == 8 && m < 30) { //if hours is 8 and minutes is before 30, set minutes to 30.
-      //   date.setMinutes(30);
-      // };
-      // // Evening
-      // if (dayOfWeek == 5) { //if the day of the week is Friday...
-      //   if (h > 13 || (h == 13 && m > 30)) { //if hours is greater than 15 (1:00pm) OR if hours is 13 and minutes are greater than 30...
-      //     remainderHour = h - 13; //gets the humber of hours over 1:00pm
-      //     remainderMinutes = m - 30; //gets the number of minutes over 30 minutes (a negative number if it is under 30 minutes)
-      //     console.log("remainderHour = " + remainderHour);
-      //     console.log("remainderMinutes = " + remainderMinutes);
-      //     date.setDate(date.getDate() + 1); //add 1 day to the date (pushing this into the weekend, thus triggering the weekend adjust)
-      //     date.setHours(8 + remainderHour); //set hour to 8:00AM + remainderHours
-      //     date.setMinutes(30 + remainderMinutes); //set minutes to 30 + remainderMinutes
-      //     console.log("officeHours adjustment date is " + date);
-      //   };
-      // } else if (h > 17 || (h == 17 && m > 30)) { //if hours is greater than 17 (5:00pm) OR if hours is 17 and minutes are greater than 30...
-      //   remainderHour = h - 17 //gets the numer of hours over 5:00pm
-      //   remainderMinutes = m - 30 //gets the number of minutes over 30 minutes (a negative number if it is under 30 minutes)
-      //   console.log("remainderHour = " + remainderHour);
-      //   console.log("remainderMinutes = " + remainderMinutes);
-      //   date.setDate(date.getDate() + 1); //add 1 day to the date
-      //   date.setHours(8 + remainderHour); //set hour to 8:00AM + remainderHours
-      //   date.setMinutes(30 + remainderMinutes); //set minutes to 30 + remainderMinutes
-      //   console.log("officeHours adjustment date is " + date);
-      // };
-      // // console.log(date);
-      // return date;
-  //};
-
-  /*
-//#endregion --------------------------------------------------------------------------------------------------
-
-// function findingRemainders (newH, newM, endHour, endMinute, oldH, oldM) {
-
-//   if (newH > endHour || (newH == endHour && newM > endMinute)) { //if the adjusted time falls after office hours...
-//     //I need to find out how much time I need to add to the next day based on the amount of hours that were added in the workOverride and the amount of time that has already passed from the pick-up/start date to the end of office hours
-//     var remainderHour = endHour - oldH; //gets the number of hours before 5:00pm or 1:00pm from the start by time
-//     //remainderHour = 3
-//     var remainderMinutes = endMinute - oldM; //gets the number of minutes under 30 minutes from the start by time (a negative number if it is above 30 minutes)
-//     //remainderMinutes = 13
-
-//     //So far, basically, we have the end of office hours time - the start by time (which will always be within office hours), giving us the amount of time that has already passed from the hoursAdjust number that we are adding to the start time of the next day
-//   };
-
-//   return [remainderHour, remainderMinutes];
-
-// };
-
-// function adj(rH, rM, hoursAdjust) { //Basically, this will return the value of hoursAdjust - remainder hours and minutes, giving us an adjusted hoursAdjust time that we will end up adding to the new start time to accuractly reflect a turn-around time within office hours
-//   if (rM > 0) { //if the remainderMinutes is greater than 0 (and therefore has minutes)...
-//     var remainingHours = hoursAdjust - rH; //subtracts the remainderHours from hoursAdjust (# of hours added to turn around time based on previously run functions)
-//     //hoursAdjust = 16
-//     //remainingHours = 16 - 3 = 13
-//     remainingHours - 1; //subracts one, since minutes will be added to this number (remember, we are going backwards)
-//     var remainingMinutes = 60 - rM; //subtracts 60 from the remainderMinutes (since hoursAdjust should always be a whole number...hopefully)
-//     //remainingMinutes = 60 - 13 = 47
-//   } else if (rM == 0) {
-//     var remainingHours = hoursAdjust - rH; //subtracts the remainderHours from hoursAdjust (# of hours added to turn around time based on previously run functions)
-//     //hoursAdjust = 16
-//     //remainingHours = 16 - 3 = 13
-//     var remainingMinutes = 0;
-//   };
-//   return [remainingHours, remainingMinutes];
-// };
-
-
-// function afterHoursRepeat(newHours, newMinutes) {
-//   if (newHours > endHour || (newHours == endHour && newMinutes > endMinute)) { //if the adjusted time falls after office hours again...
-//     remainderHour = newHours - endHour; //gets the number of hours after 5:00pm or 1:00pm from the start by time
-//     remainderMinutes = newMinutes - endMinute; //gets the number of minutes under 30 minutes from the start by time (a negative number if it is above 30 minutes)
-//     remainders(remainderHour, remainderMinutes);
-//     date.setDate(date.getDate() + 1); //add 1 day to the date
-//     date.setHours(8 + remainderHour); //set hour to 8:00AM + remainderHours
-//     date.setMinutes(30 + remainderMinutes); //set minutes to 30 + remainderMinutes
-//   };
-// };
-
-//#region WEEKEND HOURS ADJUST ---------------------------------------------------------------------------------
-  /**
-   * Finds the day of the week from override and if it is a weekend, changes it to be Monday at 8:30am
-   * @param {Date} date Date to be adjusted to a weekday
-   * @returns Date
-   */
-/*
-    function weekendAdjust(date) {
-    var dayOfWeek = date.getDay(); //get day of week from date
-
-    if (dayOfWeek == 6) { //if weekday = Saturday
-      var newDate = new Date(date);
-      newDate.setDate(newDate.getDate() + 2);
-      return newDate;
-    } else if (dayOfWeek == 0) { //if weekday = Sunday
-      var newDate = new Date(date);
-      newDate.setDate(newDate.getDate() + 1);
-      return newDate;
-    } else {
-      return date;
-    }
-  }
-/*
-  function weekendAdjust(date) {
-    var h = date.getHours(); // 4
-    var m = date.getMinutes(); // 30
-    var dayOfWeek = date.getDay(); //get day of week from date
-
-    if (dayOfWeek == 5 && (h > 13 || h == 13 && m > 30)) { //if weekday = Friday and hours is greater than 13 OR if hours is equal to 13 and minutes is greater than 30, add three days and set time to 8:30am + remainders
-      var newDate = new Date(date);
-      newDate.setDate(newDate.getDate() + 3);
-      newDate.setHours(8) //+ remainderHour);
-      newDate.setMinutes(30) // + remainderMinutes);
-      // console.log(newDate);
-      return newDate;
-    }
-
-    if (dayOfWeek == 0) { //if weekday = Sunday, add one day and set time to 8:30am + remainders
-      var newDate = new Date(date);
-      newDate.setDate(newDate.getDate() + 1);
-      newDate.setHours(8) //+ remainderHour);
-      newDate.setMinutes(30) // + remainderMinutes);
-      // console.log(newDate);
-      return newDate;
-    }
-
-    if (dayOfWeek == 6) { //if weekday = Saturday, add 2 days and set time to 8:30am + remainders
-      var newDate = new Date(date);
-
-      newDate.setDate(newDate.getDate() + 2);
-      newDate.setHours(8) // + remainderHour);
-      newDate.setMinutes(30) // + remainderMinutes);
-      // console.log(newDate);
-      return newDate;
-    } else { //if not a weekend, use original date
-      return date;
-    }
-  }
-  */
-  //#endregion ------------------------------------------------------------------------------------------------------
+  //#endregion -------------------------------------------------------------------------------------------------------------------------------------
