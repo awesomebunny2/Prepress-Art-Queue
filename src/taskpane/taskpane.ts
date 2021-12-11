@@ -17,6 +17,71 @@ var sortEvent;
 var sortColumn = "Priority";
 var projectTypeColumn = "H";
 var productColumn = "G";
+var loop = true;
+
+  //#region WEEKDAY VARIABLES ----------------------------------------------------------------------------------------------------------------
+
+    var sunday = {
+      dayID: 0,
+      startHour: 8,
+      startMinute: 30,
+      endHour: 17,
+      endMinute: 30,
+      workDay: 0,
+    }
+    var monday = {
+      dayID: 1,
+      startHour: 8,
+      startMinute: 0,
+      endHour: 17,
+      endMinute: 0,
+      workDay: 0,
+    }
+    var tuesday = {
+      dayID: 2,
+      startHour: 8,
+      startMinute: 30,
+      endHour: 17,
+      endMinute: 30,
+      workDay: 0,
+    }
+    var wednesday = {
+      dayID: 3,
+      startHour: 8,
+      startMinute: 30,
+      endHour: 17,
+      endMinute: 30,
+      workDay: 0,
+    }
+    var thursday = {
+      dayID: 4,
+      startHour: 8,
+      startMinute: 0,
+      endHour: 18,
+      endMinute: 0,
+      workDay: 0,
+    }
+    var friday = {
+      dayID: 5,
+      startHour: 8,
+      startMinute: 30,
+      endHour: 13,
+      endMinute: 30,
+      workDay: 0,
+    }
+    var saturday = {
+      dayID: 6,
+      startHour: 8,
+      startMinute: 30,
+      endHour: 17,
+      endMinute: 30,
+      workDay: 0,
+    }
+
+    var weekdayList = [sunday, monday, tuesday, wednesday, thursday, friday, saturday];
+
+  //#endregion --------------------------------------------------------------------------------------------------------------------------------
+
 //#endregion ----------------------------------------------------------------------------------------------
 
 //#region TASKPANE BUTTONS ---------------------------------------------------------------------------------------
@@ -235,22 +300,23 @@ async function onTableChanged(eventArgs: Excel.TableChangedEventArgs) { //This f
 
 
         // if (changedColumn == projectTypeColumn || productColumn) { //if updated data was in Project Type column, run the lookupStart function
+
           var projectTypeHours = lookupStart(rowValues, changedRow); //adds hours to turn-around time based on Project Type
-          // console.log("The projectTypeHours are " + projectTypeHours + " hours");
+        
           var productHours = preLookupWork(rowValues, projectTypeHours); //adds hours based on Product and adds to lookupStart output
-          // console.log("The productHours are " + productHours + " hours");
+         
           var workHoursAdjust = lookupWork(projectTypeHours, productHours); //takes prelookupWork variable and divides by 3 if lookupStart was equal to 2. Otherwise remains the same.
-          // console.log("The workHoursAdjust are " + workHoursAdjust + " hours");
+     
           var myDate = receivedAdjust(rowValues, changedRow); //grabs values from Added column and converts into date object in EST.
-          // console.log("The added date within office hours is " + myDate);
+        
           var override = startPreAdjust(rowValues, projectTypeHours, myDate); //adds manual override start hours to adjusted start time. Adjusts for office hours and weekends.
-          // console.log("The date including the projectTypeHours and Start Override values is " + override);
+        
           var startedPickedUpBy = startedBy(changedRow, sheet, override); //Prints the value of override to the Picked Up / Started By column and formats the date in a readible format.
-          // console.log("The Started / Picked Up time is " + startedPickedUpBy);
+     
           var workOverride = workPrePreAdjust(rowValues, workHoursAdjust, override); //Finds the value of Work Override in the changed row and adds it to workHoursAdjust, then adds that new number as hours to startedPickedUpBy. Formats to be within office hours and on a weekday if needed.
-          // console.log("The started date adjusted with the Work Override is " + workOverride);
+       
           var proofToClient = toClient(changedRow, sheet, workOverride); //Prints the value of workOverride to the Proof to Client column and formats the date in a readible format.
-          // console.log("The date for Proof to Client is " + proofToClient);
+        
         // }
 
 
@@ -558,12 +624,12 @@ async function tryCatch(callback) {
       var startOverride = rowValues[0][20]; //gets values of Start Orverride cell
       var startManualOverride = projectTypeHours + startOverride; //adds start override value to the number of hours for the project type
       var myDateCopy = new Date(myDate); //sets myDateCopy to myDate as a new date variable (so the old date doesnt get changed)
-      var datePreHoursAdjust = new Date(myDateCopy);
-      datePreHoursAdjust.setHours(datePreHoursAdjust.getHours() + startManualOverride);; //adds startManualOverride hours to myDate
+      //var datePreHoursAdjust = new Date(myDateCopy);
+      //datePreHoursAdjust.setHours(datePreHoursAdjust.getHours() + startManualOverride);; //adds startManualOverride hours to myDate
       // console.log(datePreHoursAdjust);
-      var adjustedDateTime = officeHours(datePreHoursAdjust, startManualOverride, myDateCopy); //converts to be within office hours if it already isn't
-      var dateWeekendAdjusted = weekendAdjust(adjustedDateTime); //converts to be a weekday if it already isn't
-      return dateWeekendAdjusted;
+      var adjustedDateTime = officeHours(myDateCopy, startManualOverride); //converts to be within office hours if it already isn't
+      //var dateWeekendAdjusted = weekendAdjust(adjustedDateTime); //converts to be a weekday if it already isn't
+      return adjustedDateTime;
     }
     /*
     function startPreAdjust(rowValues, projectTypeHours, myDate) {
@@ -683,30 +749,10 @@ async function tryCatch(callback) {
      */
     function workPrePreAdjust (rowValues, workHoursAdjust, override) {
       var workOverride = rowValues[0][21]; //gets values of Work Orverride cell
-      // console.log(workOverride);
       var workManualAdjust = workHoursAdjust + workOverride; //adds start override value to the number of hours for the project type
-      var overrideCopy = new Date(override); //sets overrideCopy to startedPickedUpBy as a new date variable (so the old date doesnt get changed)
-      var datePreHoursAdjust = new Date(overrideCopy);
-      datePreHoursAdjust.setHours(datePreHoursAdjust.getHours() + workManualAdjust); //adds workManualAdjust hours to startedPickedUpBy date
-
-      var adjustedDateTime = officeHours(datePreHoursAdjust, workManualAdjust, overrideCopy);
-      // How many hours between adjustedDateTime and the next day at 8:30am 
-
-      console.log(adjustedDateTime)
-
-      // if (adjustedDateTime > 15 && adjustedDateTime < 24) {
-      //   // It's before 5:30PM & 8:30AM
-      //   console.log(`workManualAdjustFake is between 5:30PM & 8:30AM`)
-      // } else if (adjustedDateTime < 15) {
-      //   // It's past 5:30
-      //   console.log(`workManualAdjustFake is  past 5:30PM`)
-      // }
-
-
-
-      // var sharkBait = officeHoursWork(datePreHoursAdjust, workManualAdjust, override); //converts to be within office hours if it already isn't
-      var dateWeekendAdjusted = weekendAdjust(adjustedDateTime); //converts to be a weekday if it already isn't
-      return dateWeekendAdjusted;
+      var overrideCopy = new Date(override); //sets overrideCopy to a new date variable (so the old date doesnt get changed)
+      var adjustedDateTime = officeHours(overrideCopy, workManualAdjust);
+      return adjustedDateTime;
     };
     //#endregion --------------------------------------------------------------------------------------------------
 
@@ -747,69 +793,545 @@ async function tryCatch(callback) {
 
 
 
-  //#region OFFICE HOURS START ---------------------------------------------------------------------------------------
-  /**
-   * Adjusts a date object so that it falls into office hours
-   * @param {Date} date Date to be adjusted to the start of office hours
-   * @returns Date
-   */
-  /*
-  function officeHoursStart(date) {
-    var h = date.getHours(); // 14
-    var m = date.getMinutes(); // 17
-    var dayOfWeek = date.getDay(); //get day of week from date - 1
-    var remainderHour;
-    var remainderMinutes;
-
-      // Morning
-      if (h < 8) { //if hours is before 8, set hours to 8 and minutes to 30.
-        date.setHours(8);
-        date.setMinutes(30);
-      }
-      if (h == 8 && m < 30) { //if hours is 8 and minutes is before 30, set minutes to 30.
-        date.setMinutes(30);
-      };
-      // Evening
-      if (dayOfWeek == 5) { //if the day of the week is Friday...
-        if (h > 13 || (h == 13 && m > 30)) { //if hours is greater than 15 (1:00pm) OR if hours is 13 and minutes are greater than 30...
-          remainderHour = h - 13; //gets the humber of hours over 1:00pm
-          remainderMinutes = m - 30; //gets the number of minutes over 30 minutes (a negative number if it is under 30 minutes)
-          // console.log("remainderHour = " + remainderHour);
-          // console.log("remainderMinutes = " + remainderMinutes);
-          date.setDate(date.getDate() + 1); //add 1 day to the date (pushing this into the weekend, thus triggering the weekend adjust)
-          date.setHours(8 + remainderHour); //set hour to 8:00AM + remainderHours
-          date.setMinutes(30 + remainderMinutes); //set minutes to 30 + remainderMinutes
-          // console.log("officeHours adjustment date is " + date);
-        };
-      } else if (h > 17 || (h == 17 && m > 30)) { //if hours is greater than 17 (5:00pm) OR if hours is 17 and minutes are greater than 30...
-        remainderHour = h - 17 //gets the numer of hours over 5:00pm
-        remainderMinutes = m - 30 //gets the number of minutes over 30 minutes (a negative number if it is under 30 minutes)
-        // console.log("remainderHour = " + remainderHour);
-        // console.log("remainderMinutes = " + remainderMinutes);
-        date.setDate(date.getDate() + 1); //add 1 day to the date
-        date.setHours(8 + remainderHour); //set hour to 8:00AM + remainderHours
-        date.setMinutes(30 + remainderMinutes); //set minutes to 30 + remainderMinutes
-        // console.log("officeHours adjustment date is " + date);
-      };
-      // console.log(date);
-      return date;
-  };
-  //#endregion --------------------------------------------------------------------------------------------------
-  */
-
-  // Gets the day of the week
-  function dayOfWeek(d) { //finds the day of the week
-    var day = d.getDay();
-    return day;
-  }
-
   //#region OFFICE HOURS ---------------------------------------------------------------------------------------
+    /**
+     * Adjusts a date object so that it falls into office hours
+     * @param {Date} date Date to be adjusted to the start of office hours
+     * @returns Date
+     */
+    function officeHours(day, number) {
+
+      //#region SETTING WORKDAY HOURS IN THE WEEKDAY VARIABLES -------------------------------------------------------------------------------------
+
+        //loops through my weekday variables, finds returns the proper variable title for it's index in the array, and then runs it through the findWorkDay function
+        for (var i = 0; i < weekdayList.length; i++) {
+          var weekdayReplacement = findWorkDay(weekdayList[i]);
+        };
+
+      //#endregion --------------------------------------------------------------------------------------------------------------------------------
+
+      //var aNum = 0
+
+      while (loop == true) {
+      var officeHours = withinOfficeHours(day, number);
+      day = officeHours.date;
+      number = officeHours.adjustmentNumber;
+      loop = officeHours.loop;
+      //aNum++
+      };
+      console.log("The correct date & time is: " + day);
+      loop = true;
+      return day;
+    };
+
+      //#region FUNCTIONS -------------------------------------------------------------------------------------------------------------------------
+
+
+        //#region WITHIN OFFICE HOURS FUNCTION -------------------------------------------------------------------------------------------------
+
+              function withinOfficeHours(date, adjustmentNumber) {
+
+                //#region VARIABLES ------------------------------------------------------------------------------------------------------------
+
+                    //#region SETS DATE VARIABLES ----------------------------------------------------------------------------------------------
+
+                        //converts our input variables into milliseconds
+                        var dateMilli = date.getTime();
+                        var adjustmentNumberMilli = adjustmentNumber * 3600000;
+
+                        //gets day of the week attributes for the date variable
+                        var dateDayOfWeek = dayOfWeek(date); //returns a dayID (0-6) for the day of the week of the date object
+                        var dayTitle = titleDOW(dateDayOfWeek); //returns a day title based on the dayID of the dateDayOfWeek variable
+
+                        //retrives workday variables associated with the weekday of the date variable
+                        var bookendVars = startEndMidnight(date, dayTitle);
+
+                            //#region ADJUSTS DATES IN CASE REQUEST WAS SUBMITTED OUTSIDE OF OFFICE HOURS ---------------------------------------
+
+                                if (date < bookendVars.startOfWorkDayMilli) { //if date is between 12AM and start time, adjust hours to be the start time
+                                    date.setHours(dayTitle.startHour);
+                                    date.setMinutes(dayTitle.startMinute);
+                                    date.setSeconds(0);
+                                    dateMilli = date.getTime();
+                                    bookendVars = startEndMidnight(date, dayTitle);
+                                };
+
+                                if (date > bookendVars.endOfWorkDayMilli) { //if date is after end time and before 12AM, go to next day and adjust hours to be the start time of that next day
+                                    date.setDate(date.getDate() + 1);
+                                    dateDayOfWeek = dayOfWeek(date);
+                                    dayTitle = titleDOW(dateDayOfWeek);
+                                    date.setHours(dayTitle.startHour);
+                                    date.setMinutes(dayTitle.startMinute);
+                                    date.setSeconds(0);
+                                    dateMilli = date.getTime();
+                                    bookendVars = startEndMidnight(date, dayTitle);
+                                };
+                            
+                            //#endregion ------------------------------------------------------------------------------------------------------------
+
+                            //#region ADJUSTS DATES IN CASE REQUEST WAS SUBMITTED ON WEEKEND ----------------------------------------------------
+
+                              if ((dateDayOfWeek == 6) || (dateDayOfWeek == 0)) { //if date was submitted on a weekend...
+                                  date = weekendAdjust(date, dateDayOfWeek);
+                                  dateDayOfWeek = dayOfWeek(date);
+                                  dayTitle = titleDOW(dateDayOfWeek);
+                                  date.setHours(dayTitle.startHour);
+                                  date.setMinutes(dayTitle.startMinute);
+                                  date.setSeconds(0);
+                                  dateMilli = date.getTime();
+                                  bookendVars = startEndMidnight(date, dayTitle);
+                              };
+                    
+                        //#endregion ------------------------------------------------------------------------------------------------------------
+
+                    //#endregion ----------------------------------------------------------------------------------------------------------------
+
+                    //#region SETS ADJUSTMENT DATE VARIABLES -----------------------------------------------------------------------------------
+
+                        //adds adjustmentNumber to date to get an adjustedDate value that will be used in later checks and calculations
+                        var adjustedDate = new Date(date);
+                        var adjustedDateMilli = adjustedDate.getTime();
+                        adjustedDateMilli = adjustedDateMilli + adjustmentNumberMilli;
+                        adjustedDate = new Date(adjustedDateMilli);
+
+                    //#endregion ---------------------------------------------------------------------------------------------------------------
+
+                    //#region SETS ADD A DAY VARIABLES -----------------------------------------------------------------------------------------
+
+                        //gets day of the week attributes for the day after the date variable
+
+
+
+
+                        /** --------------------------------------------------------
+                         * .-. .-. .-. .-.   . . .-. .-. .-. .-. 
+                         *  |  | | |  )|  )  |\| | |  |  |-  `-. 
+                         *  '  `-' `-' `-'   ' ` `-'  '  `-' `-'
+                         *  You are using way to many "nextDay"s here.
+                         *  I fixed this error by creating a new variable
+                         *  "newNextDay", and assigning that to the output of
+                         *  getNextDay();
+                         --------------------------------------------------------
+                         ORIGINAL CODE:
+                         -------------------------------------------------------- */
+                        /*
+                            var nextDay = new Date(date);
+                            nextDay = getNextDay(nextDay); //also sets this variable to the start time of the next day
+                            var addADay = nextDay.nextDay;
+                            var addADayTitle = nextDay.nextDayTitle;
+                            var addADayMilli = addADay.getTime();
+                            
+                            //retrives workday variables associated with the weekday of the addADay variable
+                            var bookendAddedDate = startEndMidnight(addADay, addADayTitle);
+                        */
+                        /*  --------------------------------------------------------
+                          FIXED CODE:
+                          -------------------------------------------------------- */
+                          var nextDay = new Date(date);
+
+                          var newNextDay = getNextDay(nextDay); //also sets this variable to the start time of the next day
+                          var addADay = newNextDay.nextDay;
+                          var addADayTitle = newNextDay.nextDayTitle;
+                          var addADayMilli = addADay.getTime();
+                          
+                          //retrives workday variables associated with the weekday of the addADay variable
+                          var bookendAddedDate = startEndMidnight(addADay, addADayTitle);
+                        /*  -------------------------------------------------------- */
+
+
+
+
+                    //#endregion ----------------------------------------------------------------------------------------------------------------
+
+                //#endregion --------------------------------------------------------------------------------------------------------------------
+
+                //#region ACTION: SETS ADJUSTED DATE TO BE WITHIN OFFICE HOURS ------------------------------------------------------------------
+
+                    //if adjustedDate falls outside of office hours, do this...
+                    if (adjustedDateMilli < bookendVars.startOfWorkDayMilli || adjustedDateMilli > bookendVars.endOfWorkDayMilli) { //since the bookendVars is in reference to the date variable, this function will still trigger if adjustedDate is technically within office hours, but on a different day
+
+                        //#region SETS ADJUSTMENT NUMBER VALUES ---------------------------------------------------------------------------------
+
+                            var dayRemainder = (((bookendVars.endOfWorkDayMilli - dateMilli) / 1000) / 60) / 60; //time between end of work day and the original date time
+                            var remainingAdjust = adjustmentNumber - dayRemainder; //gives us the remaining adjustment hours based off of what was already used to get to the end of the work day
+                            var remainingAdjustMilli = remainingAdjust * 3600000;
+
+                        //#endregion ------------------------------------------------------------------------------------------------------------
+
+                        //#region NEW DAY CALCULATIONS ------------------------------------------------------------------------------------------
+
+                            var newDay = new Date(addADay);
+
+                            //adds remaining adjustment hours to the beginning of the work day the next day after date (addADay)
+                            var dateTimeAdjusted = newDay.setMilliseconds((newDay.getMilliseconds() + remainingAdjustMilli));
+
+                            var dateTimeAdjustedConvert = new Date(dateTimeAdjusted); //convert serial number to date object
+
+                            date = dateTimeAdjustedConvert; //not sure if it should be date or something else yet. Need to make sure that the function works with this
+
+                        //#endregion ------------------------------------------------------------------------------------------------------------
+
+                        //#region SET LOOP VARIABLES IF STILL NOT WITHIN OFFICE HOURS OR EXCEEDS OFFICE HOURS OF NEXT DAY -----------------------
+
+                            //if the new date exceeds the office hours of addADay, then do this...
+                            if (dateTimeAdjusted > bookendAddedDate.endOfWorkDayMilli) {
+                                adjustmentNumber = (remainingAdjust - addADayTitle.workDay) //subtracts remainingAdjust hours from the total workDay hours in the addADay variable
+                                
+
+                              /** --------------------------------------------------------
+                              *  .-. .-. .-. .-.   . . .-. .-. .-. .-. 
+                              *   |  | | |  )|  )  |\| | |  |  |-  `-. 
+                              *   '  `-' `-' `-'   ' ` `-'  '  `-' `-'
+                              *  Fixed by assigning the output of getNextDay to
+                              *  a new variable "newDayAfterTomorrow".
+                              * 
+                              *  This line seems a little silly to me.
+                              *  Reassigning an object to it's own property?
+                              *     
+                              *     dayAfterTomorrow = dayAfterTomorrow.nextDay;
+                              *     
+                              --------------------------------------------------------
+                              ORIGINAL CODE:
+                              -------------------------------------------------------- */
+                              /*
+                                var dayAfterTomorrow = new Date(addADay);
+                                dayAfterTomorrow = getNextDay(dayAfterTomorrow);
+                                dayAfterTomorrow = dayAfterTomorrow.nextDay;
+                                date = new Date(dayAfterTomorrow);
+                              */
+                              /*  --------------------------------------------------------
+                                FIXED CODE:
+                                -------------------------------------------------------- */
+                                var dayAfterTomorrow = new Date(addADay);
+                                var newDayAfterTomorrow = getNextDay(dayAfterTomorrow);
+                                // dayAfterTomorrow = dayAfterTomorrow.nextDay;
+                                date = new Date(newDayAfterTomorrow.nextDay);
+                              /* -------------------------------------------------------- */
+
+
+                                loop = true;
+                                return {
+                                    date,
+                                    adjustmentNumber,
+                                    loop
+                                };
+                            } else {
+                                loop = false;
+                                return {
+                                    date,
+                                    //adjustmentNumber,
+                                    loop
+                                };
+                            };
+
+                        //#endregion -------------------------------------------------------------------------------------------------------------
+                    
+                    } else {
+                        date = adjustedDate;
+                        loop = false;
+                        return {
+                            date,
+                            adjustmentNumber,
+                            loop
+                        };
+                    };
+                
+                //#endregion --------------------------------------------------------------------------------------------------------------------
+
+            };
+
+          //#endregion ---------------------------------------------------------------------------------------------------------------------------
+
+
+        //#region FIND WORK DAY FUNCTION -------------------------------------------------------------------------------------------------------
+
+          function findWorkDay(weekday) {
+
+              //sets start time for weekday variable to a date for calculations
+              var start = new Date(0); //69, baby
+              start.setHours(weekday.startHour);
+              start.setMinutes(weekday.startMinute);
+              start.setSeconds(0);
+
+              //sets end time for weekday variable to a date for calculations
+              var end = new Date(0); //seriously though, just making sure the dates for both variables will always be the same
+              end.setHours(weekday.endHour);
+              end.setMinutes(weekday.endMinute);
+              end.setSeconds(0);
+
+              
+              /** --------------------------------------------------------
+              *  .-. .-. .-. .-.   . . .-. .-. .-. .-. 
+              *   |  | | |  )|  )  |\| | |  |  |-  `-. 
+              *   '  `-' `-' `-'   ' ` `-'  '  `-' `-'
+              * 
+              *  Found insight here:
+              *  https://stackoverflow.com/questions/36560806/the-left-hand-side-of-an-arithmetic-operation-must-be-of-type-any-number-or
+              *  
+              *  "You can fix by explicitly making the operands number (bigint) types so the - works."
+              *  Fixed Example:
+              *  new Date("2020-03-15T00:47:38.813Z").valueOf() - new Date("2020-03-15T00:47:24.676Z").valueOf()
+              *  
+              --------------------------------------------------------
+              ORIGINAL CODE:
+              -------------------------------------------------------- */
+              /*
+                  var workDayTime = (((end - start) / 1000) / 60) / 60; //subtracts end of day from start of day to get total work day hours for that weekday, then converts the milliseconds into hours (with decimal for minutes, if any)
+              */
+              /*  --------------------------------------------------------
+                FIXED CODE:
+                -------------------------------------------------------- */
+                  var workDayTime = (((end.valueOf() - start.valueOf()) / 1000) / 60) / 60; //subtracts end of day from start of day to get total work day hours for that weekday, then converts the milliseconds into hours (with decimal for minutes, if any)
+              /*  -------------------------------------------------------- */
+
+
+              weekday.workDay = workDayTime; //sets our number to the variable 
+
+              return weekday.workDay //returns our number to the actual object variable outside of the function
+
+          };
+
+        //#endregion ----------------------------------------------------------------------------------------------------------------------------
+
+
+        //#region DAY OF WEEK FUNCTION ---------------------------------------------------------------------------------------------------------
+
+          function dayOfWeek(d) { //finds the day of the week
+          var day = d.getDay();
+          return day;
+          };
+
+        //#endregion ----------------------------------------------------------------------------------------------------------------------------------
+
+
+        //#region TITLE DAY OF WEEK FUNCTION ---------------------------------------------------------------------------------------------------
+
+        /*  
+        function titleDOW(d) { //returns the day of the week (refered to directly in another variable) based on the dayID index number
+            if (d == 0) {
+              var sunday = {
+                dayID: 0,
+                startHour: 8,
+                startMinute: 30,
+                endHour: 17,
+                endMinute: 30,
+                workDay: 0,
+              }
+              return sunday;
+            } else if (d == 1) {
+              var monday = {
+                dayID: 1,
+                startHour: 8,
+                startMinute: 0,
+                endHour: 17,
+                endMinute: 0,
+                workDay: 0,
+              }
+              return monday;
+            } else if (d == 2) {
+              var tuesday = {
+                dayID: 2,
+                startHour: 8,
+                startMinute: 30,
+                endHour: 17,
+                endMinute: 30,
+                workDay: 0,
+              }
+              return tuesday;
+            } else if (d == 3) {
+              var wednesday = {
+                dayID: 3,
+                startHour: 8,
+                startMinute: 30,
+                endHour: 17,
+                endMinute: 30,
+                workDay: 0,
+              }
+              return wednesday;
+            } else if (d == 4) {
+              var thursday = {
+                dayID: 4,
+                startHour: 8,
+                startMinute: 0,
+                endHour: 18,
+                endMinute: 0,
+                workDay: 0,
+              }
+              return thursday;
+            } else if (d == 5) {
+              var friday = {
+                dayID: 5,
+                startHour: 8,
+                startMinute: 30,
+                endHour: 13,
+                endMinute: 30,
+                workDay: 0,
+              }
+              return friday;
+            } else if (d == 6) {
+              var saturday = {
+                dayID: 6,
+                startHour: 8,
+                startMinute: 30,
+                endHour: 17,
+                endMinute: 30,
+                workDay: 0,
+              }
+              return saturday;
+            };
+          };
+          */
+
+          function titleDOW(d) { //returns the day of the week (refered to directly in another variable) based on the dayID index number
+            if (d == 0) {
+              return sunday;
+            } else if (d == 1) {
+              return monday;
+            } else if (d == 2) {
+              return tuesday;
+            } else if (d == 3) {
+              return wednesday;
+            } else if (d == 4) {
+              return thursday;
+            } else if (d == 5) {
+              return friday;
+            } else if (d == 6) {
+              return saturday;
+            };
+          };
+
+        //#endregion ----------------------------------------------------------------------------------------------------------------------------------
+
+
+        //#region START/END/MIDNIGHT FUNCTION --------------------------------------------------------------------------------------------------
+
+          function startEndMidnight(originalDate, weekday) {
+
+              var startOfWorkDay = new Date(originalDate); //adjusts start time of work day based on the day of the week
+              startOfWorkDay.setHours(weekday.startHour);
+              startOfWorkDay.setMinutes(weekday.startMinute);
+              startOfWorkDay.setSeconds(0);
+              var startOfWorkDayMilli = startOfWorkDay.getTime();
+
+              var endOfWorkDay = new Date(originalDate); //adjusts end time of work day based on the day of the week
+              endOfWorkDay.setHours(weekday.endHour);
+              endOfWorkDay.setMinutes(weekday.endMinute);
+              endOfWorkDay.setSeconds(0);
+              var endOfWorkDayMilli = endOfWorkDay.getTime();
+
+              var midnight = new Date(originalDate);
+              midnight.setDate(midnight.getDate() + 1);
+              midnight.setHours(0);
+              midnight.setMinutes(0);
+              midnight.setSeconds(0);
+              var midnightMilli = midnight.getTime();
+
+              return {
+                  startOfWorkDay,
+                  startOfWorkDayMilli,
+                  endOfWorkDay,
+                  endOfWorkDayMilli,
+                  midnight,
+                  midnightMilli
+              };
+          };
+
+        //#endregion ----------------------------------------------------------------------------------------------------------------------------------
+
+
+        //#region GET NEXT DAY FUNCTION --------------------------------------------------------------------------------------------------------
+
+          function getNextDay(date) {
+
+              /** --------------------------------------------------------
+              *  .-. .-. .-. .-.   . . .-. .-. .-. .-. 
+              *   |  | | |  )|  )  |\| | |  |  |-  `-. 
+              *   '  `-' `-' `-'   ' ` `-'  '  `-' `-'
+              * 
+              *  Created a new variable "newNextDay" and assigned it to the
+              *  output of nextDay.setDate(nextDay.getDate() + 1);
+              *  Then made nextDay the new Date() from newNextDay
+              * 
+              * This code can be cleaned up I think. Lots of Date object
+              * floating around and being coerced into other Date objects
+              *  
+              --------------------------------------------------------
+              ORIGINAL CODE:
+              -------------------------------------------------------- */
+              /*
+                var nextDay = new Date(date);
+                nextDay = nextDay.setDate(nextDay.getDate() + 1); //returns the day after the original date
+                nextDay = new Date(nextDay);
+                var nextDayDayOfWeek = dayOfWeek(nextDay);
+                var nextDayTitle = titleDOW(nextDayDayOfWeek); //returns a day title based on the dayID of the addADay variable              */
+              /*  --------------------------------------------------------
+                FIXED CODE:
+                -------------------------------------------------------- */
+                var nextDay = new Date(date);
+                var newNextDay = nextDay.setDate(nextDay.getDate() + 1); //returns the day after the original date
+                nextDay = new Date(newNextDay);
+                var nextDayDayOfWeek = dayOfWeek(nextDay);
+                var nextDayTitle = titleDOW(nextDayDayOfWeek); //returns a day title based on the dayID of the addADay variable
+              /*  -------------------------------------------------------- */
+
+              
+
+              if ((nextDayDayOfWeek == 6) || (nextDayDayOfWeek == 0)) { //checks if nextDay falls on a weekend
+                  nextDay = weekendAdjust(nextDay, nextDayDayOfWeek); //adjusts nextDay output to not fall on a weekend
+                  nextDayDayOfWeek = dayOfWeek(nextDay);
+                  nextDayTitle = titleDOW(nextDayDayOfWeek);
+              };
+
+              nextDay.setHours(nextDayTitle.startHour);
+              nextDay.setMinutes(nextDayTitle.startMinute);
+              nextDay.setSeconds(0);
+              return {
+                  nextDay,
+                  nextDayTitle
+              };
+          };
+
+        //#endregion ----------------------------------------------------------------------------------------------------------------------------------
+
+
+        //#region WEEKEND ADJUST FUNCTION ------------------------------------------------------------------------------------------------------
+          
+function weekendAdjust(date, dateWeekday) {
+  if (dateWeekday == 6) {
+      var weekend = new Date(date);
+      weekend.setDate(weekend.getDate() + 2);
+      return weekend;
+  } else if (dateWeekday == 0) {
+      var weekend = new Date(date);
+      weekend.setDate(weekend.getDate() + 1);
+      return weekend;
+  };
+};
+
+//#endregion ------------------------------------------------------------------------------------------------------------------------------
+
+
+      //#endregion -------------------------------------------------------------------------------------------------------------------------------
+
+  //#endregion ---------------------------------------------------------------------------------------------------
+
+
+
+
+
+
+
+//OLD OFFICE HOURS REFERENCE!!!!!!!!!!!!!!!!!!!!!!!! _down _down 
+
+//#region OFFICE HOURS ---------------------------------------------------------------------------------------
   /**
    * Adjusts a date object so that it falls into office hours
    * @param {Date} date Date to be adjusted to the start of office hours
    * @returns Date
    */
-  function officeHours(date, hoursAdjust, originalDate) {
+
+/*
+   function officeHours(date, hoursAdjust, originalDate) {
     var endHour;
     var endMinute;
     var startHour;
@@ -949,9 +1471,9 @@ async function tryCatch(callback) {
       */
 
       
-    };
+   // };
 
-    return date;
+    //return date;
 
 
 
@@ -1040,7 +1562,9 @@ async function tryCatch(callback) {
       // };
       // // console.log(date);
       // return date;
-  };
+  //};
+
+  /*
 //#endregion --------------------------------------------------------------------------------------------------
 
 // function findingRemainders (newH, newM, endHour, endMinute, oldH, oldM) {
@@ -1094,7 +1618,7 @@ async function tryCatch(callback) {
    * @param {Date} date Date to be adjusted to a weekday
    * @returns Date
    */
-
+/*
     function weekendAdjust(date) {
     var dayOfWeek = date.getDay(); //get day of week from date
 
@@ -1148,5 +1672,3 @@ async function tryCatch(callback) {
   }
   */
   //#endregion ------------------------------------------------------------------------------------------------------
-
-//#endregion -----------------------------------------------------------------------------------------------------
