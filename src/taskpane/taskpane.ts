@@ -20,7 +20,9 @@
   var sortColumn = "Priority";
   var projectTypeColumn = "H";
   var productColumn = "G";
+  var addedColumn = "J";
   var loop = true;
+
   var brandNewBuild;
   var newBuildOtherNatives;
   var newBuildFromTemplate;
@@ -144,10 +146,10 @@
 
   //#region TASKPANE BUTTONS ---------------------------------------------------------------------------------------
   window.onload = function() { //Wait for the window to load, then do the following:
-    document.getElementById("queue-btn").onclick = function addRequest() {
-      document.getElementById("home").style.display = "none";
-      document.getElementById("add-to-queue").style.display = "block";
-    };
+   // document.getElementById("queue-btn").onclick = function addRequest() {
+    //  document.getElementById("home").style.display = "none";
+     // document.getElementById("add-to-queue").style.display = "block";
+   // };
 
     document.getElementById("back-btn").onclick = function backToHome() {
       document.getElementById("add-to-queue").style.display = "none";
@@ -208,7 +210,7 @@
         document.getElementById("app-body").style.display = "flex"; //Keep content in taskpane flexible to scaling, I think...
           
         Excel.run(async context => { //Do while Excel is running
-          
+
           moveEvent = context.workbook.tables.onChanged.add(onTableChanged);
 
           // sortEvent = context.workbook.tables.onChanged.add(sortDate);
@@ -389,17 +391,40 @@ async function onTableChanged(eventArgs: Excel.TableChangedEventArgs) { //This f
   //#region MOVES DATA BETWEEN WORKSHEETS ------------------------------------------------------------------------
   async function onTableChanged(eventArgs: Excel.TableChangedEventArgs) { //This function will be using event arguments to collect data from the workbook
 
-    Excel.run(async (context) => {      
+    await Excel.run(async (context) => {      
 
       //#region EVENT VARIABLES -----------------------------------------------------------------------------------
       var details = eventArgs.details; //Loads the values before and after the event
       var address = eventArgs.address; //Loads the cell's address where the event took place
+      var changeType = eventArgs.changeType;
       var sheet = context.workbook.worksheets.getActiveWorksheet().load("name");
       var changedTable = context.workbook.tables.getItem(eventArgs.tableId).load("name"); //Returns tableId of the table where the event occured
       var regexStr = address.match(/[a-zA-Z]+|[0-9]+(?:\.[0-9]+|)/g); //Separates the column letter(s) from the row number for the address: presented as a string
       var changedColumn = regexStr[0]; //The first instance of the separated address array, being the column letter(s)
       var changedRow = Number(regexStr[1]) - 2; //The second instance of the separated address array, being the row, converted into a number and subtracted by 2
       var myRow = changedTable.rows.getItemAt(changedRow).load("values"); //loads the values of the changed row in the table where the event was fired 
+
+      var addedAddress = "J" + (changedRow + 2); //takes the row that was updated and locates the address from the Added column.
+      var addedRange = sheet.getRange(addedAddress);
+      addedRange.load("values");
+
+      var startAddress = "U" + (changedRow + 2);
+      var startRange = sheet.getRange(startAddress);
+      startRange.load("values");
+
+      var workAddress = "V" + (changedRow + 2);
+      var workRange = sheet.getRange(workAddress);
+      workRange.load("values");
+
+      var changedRowAddress = "A" + (changedRow + 2) + ":" + "V" + (changedRow + 2);
+      var changedRange = sheet.getRange(changedRowAddress);
+
+     
+      //var unassignedTable = context.workbook.tables.getItem("UnassignedProjects");
+      //var productColumn = changedTable.columns.getItem("Product").load("name");
+      //var projectTypeColumn = changedTable.columns.getItem("Project Type").load("name");
+      //var addedColumn = changedTable.columns.getItem("Added").load("name");
+      //var artistColumn = changedTable.columns.getItem("Artist").load("name");
 
       var projectTypeTable = context.workbook.tables.getItem("ProjectTypeTable");
       var projectTypeHourColumn = projectTypeTable.columns.getItem("Project Type Hour");
@@ -413,6 +438,8 @@ async function onTableChanged(eventArgs: Excel.TableChangedEventArgs) { //This f
       var productTableRows = productTable.rows
       productTableRows.load("items")     
       //#endregion ------------------------------------------------------------------------------------------------
+
+   
 
       //#region SPECIFIC TABLE VARIABLES --------------------------------------------------------------------------
         //#region UNASSIGNED PROJECTS VARIABLES ------------------------------------------------------------
@@ -513,302 +540,250 @@ async function onTableChanged(eventArgs: Excel.TableChangedEventArgs) { //This f
         //#endregion ---------------------------------------------------------------------------
       //#endregion ------------------------------------------------------------------------------------------------
 
-      //#region INITIATING THE MOVE EVENT -------------------------------------------------------------------------  
-      var theChange = eventArgs.changeType; //Kind of change that was made
-      if (theChange == "RangeEdited" && eventArgs.details !== undefined ) {
-        
-        // Ignore the moved-to table's on change event 
+      //#region INITIATING THE MOVE EVENT ------------------------------------------------------------------------- 
+      if (changeType == "RowInserted") {
+
+        await context.sync().then(function () { // WHAT IS LOOPING
+
+          var addedRangeValues = addedRange.values[0][0];
+          var startRangeValues = startRange.values[0][0];
+          var workRangeValues = workRange.values[0][0];
 
 
+          if (addedRangeValues == "") {
+            var newRange = megaDooDoo(sheet, changedRow);
+            //return newRange;
+          } else {
+          console.log("Inserted row already had an Added date, so the current time was not assigned");
+          };
+
+          if (startRangeValues == "") {
+            startRangeValues = [[0]];
+            return startRangeValues;
+          };
+
+          if (workRangeValues == "") {
+            workRangeValues = [[0]];
+            return workRangeValues;
+          };
+
+
+
+
+
+        }).catch(function (error) {
+          console.log('Error: ' + error);
+          if (error instanceof OfficeExtension.Error) {
+              console.log('Debug info: ' + JSON.stringify(error.debugInfo));
+          };
+          //console.log("Promise Rejected");
+        });
+      };
+
+
+      if (changeType == "RangeEdited" && eventArgs.details !== undefined ) {
         
-        console.log("The move data event has been initiated!!");
-        
+        // If values are the same as before, ignore the moved-to table's on change event        
         if (eventArgs.details.valueAfter == eventArgs.details.valueBefore) {
-          console.log("No values have changed. Exiting move data event...")
+          //console.log("No values have changed. Exiting move data event...")
           return;
         };
       //#endregion ------------------------------------------------------------------------------------------------
 
       //#region MOVE CONDITIONS -----------------------------------------------------------------------------------
           
-        return context.sync().then(function () { // WHAT IS LOOPING
+        await context.sync().then(function () { // WHAT IS LOOPING
           // console.log("Promise Fulfilled!");
 
           // console.log(myRow.values);
 
 
 
+
+
           var rowValues = myRow.values;
 
-
-          for (var i = 0; i < projectTypeTableRows.items.length; i++) {
-            //  console.log(tableRows.items[i].values);
-              var projectTypeValues = projectTypeTableRows.items[i].values;
-              //console.log(projectTypeValues);
-                if (i == 0) {
-                  brandNewBuild = projectTypeValues[0][1];
-                } else if (i == 1) {
-                  newBuildOtherNatives = projectTypeValues[0][1];
-                } else if (i == 2) {
-                  newBuildFromTemplate = projectTypeValues[0][1];
-                } else if (i == 3) {
-                  changesToExistingNatives = projectTypeValues[0][1];
-                } else if (i == 4) {
-                  specCheck = projectTypeValues[0][1];
-                } else if (i == 5) {
-                  weTransferUpload = projectTypeValues[0][1];
-                } else if (i == 6) {
-                  specialRequest = projectTypeValues[0][1];
-                } else if (i == 7) {
-                  otherProjectType = projectTypeValues[0][1];
-                };
+          //if (changedTable.id == projectTypeTable.id) {
+            for (var i = 0; i < projectTypeTableRows.items.length; i++) {
+              gee(projectTypeTableRows, i);
             };
+          //};
 
-            console.log("The updated projectType values are: " + brandNewBuild + ", " + newBuildOtherNatives + ", " + newBuildFromTemplate + ", " + changesToExistingNatives + ", " + specCheck + ", " + weTransferUpload + ", " + specialRequest + ", " + otherProjectType)
-      
+          //if (changedTable.id == productTable.id) {
             for (var i = 0; i < productTableRows.items.length; i++) {
-      
-              var productValues = productTableRows.items[i].values;
-      
-                if (i == 0) {
-                  menu = productValues[0][1];
-                } else if (i == 1) {
-                  menuXL = productValues[0][1];
-                } else if (i == 2) {
-                  smallMenu = productValues[0][1];
-                } else if (i == 3) {
-                  brochure = productValues[0][1];
-                } else if (i == 4) {
-                  brochureXL = productValues[0][1];
-                } else if (i == 5) {
-                  smallBrochure = productValues[0][1];
-                } else if (i == 6) {
-                  postcard = productValues[0][1];
-                } else if (i == 7) {
-                  jumboPostcard = productValues[0][1];
-                } else if (i == 8) {
-                  colossalPostcard = productValues[0][1];
-                } else if (i == 9) {
-                  scratchoffPostcard = productValues[0][1];
-                } else if (i == 10) {
-                  jumboScratchoffPostcard = productValues[0][1];
-                } else if (i == 11) {
-                  peelBoxPostcard = productValues[0][1];
-                } else if (i == 12) {
-                  magnet = productValues[0][1];
-                } else if (i == 13) {
-                  foldedMagnet = productValues[0][1];
-                } else if (i == 14) {
-                  twoSBT = productValues[0][1];
-                } else if (i == 15) {
-                  boxTopper = productValues[0][1];
-                } else if (i == 16) {
-                  flyer = productValues[0][1];
-                } else if (i == 17) {
-                  doorHanger = productValues[0][1];
-                } else if (i == 18) {
-                  smallPlastic = productValues[0][1];
-                } else if (i == 19) {
-                  mediumPlastic = productValues[0][1];
-                } else if (i == 20) {
-                  largePlastic = productValues[0][1];
-                } else if (i == 21) {
-                  couponBooklet = productValues[0][1];
-                } else if (i == 22) {
-                  envelopeMailer = productValues[0][1];
-                } else if (i == 23) {
-                  birthdayPostcard = productValues[0][1];
-                } else if (i == 24) {
-                  newMover = productValues[0][1];
-                } else if (i == 25) {
-                  plasticNewMover = productValues[0][1];
-                } else if (i == 26) {
-                  birthdayPlastic = productValues[0][1];
-                } else if (i == 27) {
-                  wideFormat = productValues[0][1];
-                } else if (i == 28) {
-                  windowClings = productValues[0][1];
-                } else if (i == 29) {
-                  businessCards = productValues[0][1];
-                } else if (i == 30) {
-                  artworkOnly = productValues[0][1];
-                } else if (i == 31) {
-                  logoCreation = productValues[0][1];
-                } else if (i == 32) {
-                  logoRecreation = productValues[0][1];
-                } else if (i == 33) {
-                  legalLetter = productValues[0][1];
-                } else if (i == 34) {
-                  letter = productValues[0][1];
-                } else if (i == 35) {
-                  mapCreation = productValues[0][1];
-                } else if (i == 36) {
-                  menuXXL = productValues[0][1];
-                } else if (i == 37) {
-                  biFoldMenu = productValues[0][1];
-                } else if (i == 38) {
-                  mediaKit = productValues[0][1];
-                } else if (i == 39) {
-                  popBanner = productValues[0][1];
-                } else if (i == 40) {
-                  otherProduct = productValues[0][1];
-                };
+              pee(productTableRows, i);
+            };
+          //};
+
+
+          changedRange.format.font.name = "Calibri";
+          changedRange.format.font.size = 12;
+          changedRange.format.font.color = "#000000";
+
+
+        
+
+
+          
+
+
+
+          if (sheet.id !== validationSheet.id) {
+
+            if (changedColumn == projectTypeColumn || changedColumn == productColumn || changedColumn == addedColumn) { //if updated data was in Project Type column, run the lookupStart function
+
+              var projectTypeHours = lookupStart(rowValues, changedRow); //adds hours to turn-around time based on Project Type
+            
+              var productHours = preLookupWork(rowValues, projectTypeHours); //adds hours based on Product and adds to lookupStart output
+            
+              var workHoursAdjust = lookupWork(productHours, rowValues); //takes prelookupWork variable and divides by 3 if lookupStart was equal to 2. Otherwise remains the same.
+        
+              var myDate = receivedAdjust(rowValues, changedRow); //grabs values from Added column and converts into date object in EST.
+            
+              var override = startPreAdjust(rowValues, projectTypeHours, myDate); //adds manual override start hours to adjusted start time. Adjusts for office hours and weekends.
+            
+              var startedPickedUpBy = startedBy(changedRow, sheet, override); //Prints the value of override to the Picked Up / Started By column and formats the date in a readible format.
+        
+              var workOverride = workPrePreAdjust(rowValues, workHoursAdjust, override); //Finds the value of Work Override in the changed row and adds it to workHoursAdjust, then adds that new number as hours to startedPickedUpBy. Formats to be within office hours and on a weekday if needed.
+          
+              var proofToClient = toClient(changedRow, sheet, workOverride); //Prints the value of workOverride to the Proof to Client column and formats the date in a readible format.
+
+              console.log("Turn Around time variables were updated!");
+
+              return;
+            
             };
 
-            console.log("The updated data for 2SBT is: " + twoSBT);
-            console.log("The updated date for Other is: " + otherProduct);
 
+            if (changedColumn == artistColumn) { //if updated data was in the Artist column, run the following code
 
+              if (details.valueAfter == "Unassigned") {
+                unassignedTable.rows.add(null, myRow.values); //Adds empty row to bottom of GreenBasket Table, then inserts the changed values into this empty row
+                myRow.delete(); //Deletes the changed row from the original sheet
+                console.log("Data was moved to the Unassigned Projects Table!");
+                return;
 
-          // if (changedColumn == projectTypeColumn || productColumn) { //if updated data was in Project Type column, run the lookupStart function
-
-            var projectTypeHours = lookupStart(rowValues, changedRow); //adds hours to turn-around time based on Project Type
-          
-            var productHours = preLookupWork(rowValues, projectTypeHours); //adds hours based on Product and adds to lookupStart output
-          
-            var workHoursAdjust = lookupWork(projectTypeHours, productHours); //takes prelookupWork variable and divides by 3 if lookupStart was equal to 2. Otherwise remains the same.
-      
-            var myDate = receivedAdjust(rowValues, changedRow); //grabs values from Added column and converts into date object in EST.
-          
-            var override = startPreAdjust(rowValues, projectTypeHours, myDate); //adds manual override start hours to adjusted start time. Adjusts for office hours and weekends.
-          
-            var startedPickedUpBy = startedBy(changedRow, sheet, override); //Prints the value of override to the Picked Up / Started By column and formats the date in a readible format.
-      
-            var workOverride = workPrePreAdjust(rowValues, workHoursAdjust, override); //Finds the value of Work Override in the changed row and adds it to workHoursAdjust, then adds that new number as hours to startedPickedUpBy. Formats to be within office hours and on a weekday if needed.
-        
-            var proofToClient = toClient(changedRow, sheet, workOverride); //Prints the value of workOverride to the Proof to Client column and formats the date in a readible format.
-          
-          // }
-
-
-          if (changedColumn == artistColumn) { //if updated data was in the Artist column, run the following code
-
-            if (details.valueAfter == "Unassigned") {
-              unassignedTable.rows.add(null, myRow.values); //Adds empty row to bottom of GreenBasket Table, then inserts the changed values into this empty row
-              myRow.delete(); //Deletes the changed row from the original sheet
-              console.log("Data was moved to the Unassigned Projects Table!");
-              return;
-
-            } else if (details.valueAfter == "Matt") {
-              mattTable.rows.add(null, myRow.values); //Adds empty row to bottom of GreenBasket Table, then inserts the changed values into this empty row
-              myRow.delete(); //Deletes the changed row from the original sheet
-              console.log("Data was moved to the Matt Table!");
-              return;
-              
-            } else if (details.valueAfter == "Alaina") {
-              alainaTable.rows.add(null, myRow.values); //Adds empty row to bottom of GreenBasket Table, then inserts the changed values into this empty row
-              myRow.delete(); //Deletes the changed row from the original sheet
-              console.log("Data was moved to the Alaina Table!");
-              return;            
-            } else if (details.valueAfter == "Berto") {
-              bertoTable.rows.add(null, myRow.values); //Adds empty row to bottom of GreenBasket Table, then inserts the changed values into this empty row
-              myRow.delete(); //Deletes the changed row from the original sheet
-              console.log("Data was moved to the Berto Table!");
-              return;
-            } else if (details.valueAfter == "Bre B.") {
-              breBTable.rows.add(null, myRow.values); //Adds empty row to bottom of GreenBasket Table, then inserts the changed values into this empty row
-              myRow.delete(); //Deletes the changed row from the original sheet
-              console.log("Data was moved to the Bre B. Table!");
-              return;
-            } else if (details.valueAfter == "Christian") {
-              christianTable.rows.add(null, myRow.values); //Adds empty row to bottom of GreenBasket Table, then inserts the changed values into this empty row
-              myRow.delete(); //Deletes the changed row from the original sheet
-              console.log("Data was moved to the Christian Table!");
-              return;
-            } else if (details.valueAfter == "Emily") {
-              emilyTable.rows.add(null, myRow.values); //Adds empty row to bottom of GreenBasket Table, then inserts the changed values into this empty row
-              myRow.delete(); //Deletes the changed row from the original sheet
-              console.log("Data was moved to the Emily Table!");
-              return;
-            } else if (details.valueAfter == "Ian") {
-              ianTable.rows.add(null, myRow.values); //Adds empty row to bottom of GreenBasket Table, then inserts the changed values into this empty row
-              myRow.delete(); //Deletes the changed row from the original sheet
-              console.log("Data was moved to the Ian Table!");
-              return;
-            } else if (details.valueAfter == "Jeff") {
-              jeffTable.rows.add(null, myRow.values); //Adds empty row to bottom of GreenBasket Table, then inserts the changed values into this empty row
-              myRow.delete(); //Deletes the changed row from the original sheet
-              console.log("Data was moved to the Jeff Table!");
-              return;
-            } else if (details.valueAfter == "Josh") {
-              joshTable.rows.add(null, myRow.values); //Adds empty row to bottom of GreenBasket Table, then inserts the changed values into this empty row
-              myRow.delete(); //Deletes the changed row from the original sheet
-              console.log("Data was moved to the Josh Table!");
-              return;
-            } else if (details.valueAfter == "Kristen") {
-              kristenTable.rows.add(null, myRow.values); //Adds empty row to bottom of GreenBasket Table, then inserts the changed values into this empty row
-              myRow.delete(); //Deletes the changed row from the original sheet
-              console.log("Data was moved to the Kristen Table!");
-              return;
-            } else if (details.valueAfter == "Nichole") {
-              nicholeTable.rows.add(null, myRow.values); //Adds empty row to bottom of GreenBasket Table, then inserts the changed values into this empty row
-              myRow.delete(); //Deletes the changed row from the original sheet
-              console.log("Data was moved to the Nichole Table!");
-              return;
-            } else if (details.valueAfter == "Luke") {
-              lukeTable.rows.add(null, myRow.values); //Adds empty row to bottom of GreenBasket Table, then inserts the changed values into this empty row
-              myRow.delete(); //Deletes the changed row from the original sheet
-              console.log("Data was moved to the Luke Table!");
-              return;
-            } else if (details.valueAfter == "Lisa") {
-              lisaTable.rows.add(null, myRow.values); //Adds empty row to bottom of GreenBasket Table, then inserts the changed values into this empty row
-              myRow.delete(); //Deletes the changed row from the original sheet
-              console.log("Data was moved to the Lisa Table!");
-              return;
-            } else if (details.valueAfter == "Luis") {
-              luisTable.rows.add(null, myRow.values); //Adds empty row to bottom of GreenBasket Table, then inserts the changed values into this empty row
-              myRow.delete(); //Deletes the changed row from the original sheet
-              console.log("Data was moved to the Luis Table!");
-              return;
-            } else if (details.valueAfter == "Peter") {
-              peterTable.rows.add(null, myRow.values); //Adds empty row to bottom of GreenBasket Table, then inserts the changed values into this empty row
-              myRow.delete(); //Deletes the changed row from the original sheet
-              console.log("Data was moved to the Peter Table!");
-              return;
-            } else if (details.valueAfter == "Rita") {
-              ritaTable.rows.add(null, myRow.values); //Adds empty row to bottom of GreenBasket Table, then inserts the changed values into this empty row
-              myRow.delete(); //Deletes the changed row from the original sheet
-              console.log("Data was moved to the Rita Table!");
-              return;
-            } else if (details.valueAfter == "Ethan") {
-              ethanTable.rows.add(null, myRow.values); //Adds empty row to bottom of GreenBasket Table, then inserts the changed values into this empty row
-              myRow.delete(); //Deletes the changed row from the original sheet
-              console.log("Data was moved to the Ethan Table!");
-              return;
-            } else if (details.valueAfter == "Bre Z.") {
-              breZTable.rows.add(null, myRow.values); //Adds empty row to bottom of GreenBasket Table, then inserts the changed values into this empty row
-              myRow.delete(); //Deletes the changed row from the original sheet
-              console.log("Data was moved to the Bre Z. Table!");
-              return;
-            } else if (details.valueAfter == "Joe") {
-              joeTable.rows.add(null, myRow.values); //Adds empty row to bottom of GreenBasket Table, then inserts the changed values into this empty row
-              myRow.delete(); //Deletes the changed row from the original sheet
-              console.log("Data was moved to the Joe Table!");
-              return;
-            } else if (details.valueAfter == "Jordan") {
-              jordanTable.rows.add(null, myRow.values); //Adds empty row to bottom of GreenBasket Table, then inserts the changed values into this empty row
-              myRow.delete(); //Deletes the changed row from the original sheet
-              console.log("Data was moved to the Jordan Table!");
-              return;
-            } else if (details.valueAfter == "Hazel-Rah") {
-              hazelTable.rows.add(null, myRow.values); //Adds empty row to bottom of GreenBasket Table, then inserts the changed values into this empty row
-              myRow.delete(); //Deletes the changed row from the original sheet
-              console.log("Data was moved to the Hazel-Rah Table!");
-              return;
-            } else if (details.valueAfter == "Todd") {
-              toddTable.rows.add(null, myRow.values); //Adds empty row to bottom of GreenBasket Table, then inserts the changed values into this empty row
-              myRow.delete(); //Deletes the changed row from the original sheet
-              console.log("Data was moved to the Todd Table!");
-              return;
+              } else if (details.valueAfter == "Matt") {
+                mattTable.rows.add(null, myRow.values); //Adds empty row to bottom of GreenBasket Table, then inserts the changed values into this empty row
+                myRow.delete(); //Deletes the changed row from the original sheet
+                console.log("Data was moved to the Matt Table!");
+                return;
+                
+              } else if (details.valueAfter == "Alaina") {
+                alainaTable.rows.add(null, myRow.values); //Adds empty row to bottom of GreenBasket Table, then inserts the changed values into this empty row
+                myRow.delete(); //Deletes the changed row from the original sheet
+                console.log("Data was moved to the Alaina Table!");
+                return;            
+              } else if (details.valueAfter == "Berto") {
+                bertoTable.rows.add(null, myRow.values); //Adds empty row to bottom of GreenBasket Table, then inserts the changed values into this empty row
+                myRow.delete(); //Deletes the changed row from the original sheet
+                console.log("Data was moved to the Berto Table!");
+                return;
+              } else if (details.valueAfter == "Bre B.") {
+                breBTable.rows.add(null, myRow.values); //Adds empty row to bottom of GreenBasket Table, then inserts the changed values into this empty row
+                myRow.delete(); //Deletes the changed row from the original sheet
+                console.log("Data was moved to the Bre B. Table!");
+                return;
+              } else if (details.valueAfter == "Christian") {
+                christianTable.rows.add(null, myRow.values); //Adds empty row to bottom of GreenBasket Table, then inserts the changed values into this empty row
+                myRow.delete(); //Deletes the changed row from the original sheet
+                console.log("Data was moved to the Christian Table!");
+                return;
+              } else if (details.valueAfter == "Emily") {
+                emilyTable.rows.add(null, myRow.values); //Adds empty row to bottom of GreenBasket Table, then inserts the changed values into this empty row
+                myRow.delete(); //Deletes the changed row from the original sheet
+                console.log("Data was moved to the Emily Table!");
+                return;
+              } else if (details.valueAfter == "Ian") {
+                ianTable.rows.add(null, myRow.values); //Adds empty row to bottom of GreenBasket Table, then inserts the changed values into this empty row
+                myRow.delete(); //Deletes the changed row from the original sheet
+                console.log("Data was moved to the Ian Table!");
+                return;
+              } else if (details.valueAfter == "Jeff") {
+                jeffTable.rows.add(null, myRow.values); //Adds empty row to bottom of GreenBasket Table, then inserts the changed values into this empty row
+                myRow.delete(); //Deletes the changed row from the original sheet
+                console.log("Data was moved to the Jeff Table!");
+                return;
+              } else if (details.valueAfter == "Josh") {
+                joshTable.rows.add(null, myRow.values); //Adds empty row to bottom of GreenBasket Table, then inserts the changed values into this empty row
+                myRow.delete(); //Deletes the changed row from the original sheet
+                console.log("Data was moved to the Josh Table!");
+                return;
+              } else if (details.valueAfter == "Kristen") {
+                kristenTable.rows.add(null, myRow.values); //Adds empty row to bottom of GreenBasket Table, then inserts the changed values into this empty row
+                myRow.delete(); //Deletes the changed row from the original sheet
+                console.log("Data was moved to the Kristen Table!");
+                return;
+              } else if (details.valueAfter == "Nichole") {
+                nicholeTable.rows.add(null, myRow.values); //Adds empty row to bottom of GreenBasket Table, then inserts the changed values into this empty row
+                myRow.delete(); //Deletes the changed row from the original sheet
+                console.log("Data was moved to the Nichole Table!");
+                return;
+              } else if (details.valueAfter == "Luke") {
+                lukeTable.rows.add(null, myRow.values); //Adds empty row to bottom of GreenBasket Table, then inserts the changed values into this empty row
+                myRow.delete(); //Deletes the changed row from the original sheet
+                console.log("Data was moved to the Luke Table!");
+                return;
+              } else if (details.valueAfter == "Lisa") {
+                lisaTable.rows.add(null, myRow.values); //Adds empty row to bottom of GreenBasket Table, then inserts the changed values into this empty row
+                myRow.delete(); //Deletes the changed row from the original sheet
+                console.log("Data was moved to the Lisa Table!");
+                return;
+              } else if (details.valueAfter == "Luis") {
+                luisTable.rows.add(null, myRow.values); //Adds empty row to bottom of GreenBasket Table, then inserts the changed values into this empty row
+                myRow.delete(); //Deletes the changed row from the original sheet
+                console.log("Data was moved to the Luis Table!");
+                return;
+              } else if (details.valueAfter == "Peter") {
+                peterTable.rows.add(null, myRow.values); //Adds empty row to bottom of GreenBasket Table, then inserts the changed values into this empty row
+                myRow.delete(); //Deletes the changed row from the original sheet
+                console.log("Data was moved to the Peter Table!");
+                return;
+              } else if (details.valueAfter == "Rita") {
+                ritaTable.rows.add(null, myRow.values); //Adds empty row to bottom of GreenBasket Table, then inserts the changed values into this empty row
+                myRow.delete(); //Deletes the changed row from the original sheet
+                console.log("Data was moved to the Rita Table!");
+                return;
+              } else if (details.valueAfter == "Ethan") {
+                ethanTable.rows.add(null, myRow.values); //Adds empty row to bottom of GreenBasket Table, then inserts the changed values into this empty row
+                myRow.delete(); //Deletes the changed row from the original sheet
+                console.log("Data was moved to the Ethan Table!");
+                return;
+              } else if (details.valueAfter == "Bre Z.") {
+                breZTable.rows.add(null, myRow.values); //Adds empty row to bottom of GreenBasket Table, then inserts the changed values into this empty row
+                myRow.delete(); //Deletes the changed row from the original sheet
+                console.log("Data was moved to the Bre Z. Table!");
+                return;
+              } else if (details.valueAfter == "Joe") {
+                joeTable.rows.add(null, myRow.values); //Adds empty row to bottom of GreenBasket Table, then inserts the changed values into this empty row
+                myRow.delete(); //Deletes the changed row from the original sheet
+                console.log("Data was moved to the Joe Table!");
+                return;
+              } else if (details.valueAfter == "Jordan") {
+                jordanTable.rows.add(null, myRow.values); //Adds empty row to bottom of GreenBasket Table, then inserts the changed values into this empty row
+                myRow.delete(); //Deletes the changed row from the original sheet
+                console.log("Data was moved to the Jordan Table!");
+                return;
+              } else if (details.valueAfter == "Hazel-Rah") {
+                hazelTable.rows.add(null, myRow.values); //Adds empty row to bottom of GreenBasket Table, then inserts the changed values into this empty row
+                myRow.delete(); //Deletes the changed row from the original sheet
+                console.log("Data was moved to the Hazel-Rah Table!");
+                return;
+              } else if (details.valueAfter == "Todd") {
+                toddTable.rows.add(null, myRow.values); //Adds empty row to bottom of GreenBasket Table, then inserts the changed values into this empty row
+                myRow.delete(); //Deletes the changed row from the original sheet
+                console.log("Data was moved to the Todd Table!");
+                return;
+              } else {
+                console.log("Looks like there wasn't an Artist change this time. No data was moved...");
+              } return;
             } else {
-              console.log("Looks like there wasn't an Artist change this time. No data was moved...");
-            } return;
+              //console.log("The artist column was not updated, so nothing was moved...");
+              return;
+            };
           } else {
-
-            console.log("The artist column was not updated, so nothing was moved!");
-            // context.sync();
-            return;
-          }
+            console.log("Adjustments were made to the validation sheet, therefore the date variables and move functions were not triggered");
+          };
           // context.sync();
 
         }).catch(function (error) {
@@ -821,9 +796,10 @@ async function onTableChanged(eventArgs: Excel.TableChangedEventArgs) { //This f
 
       //#endregion ------------------------------------------------------------------------------------------------
 
-      };
+      }; 
+
     });
-  }
+  };
   //#endregion ----------------------------------------------------------------------------------------------------
 
 //#endregion ------------------------------------------------------------------------------------------------------
@@ -934,6 +910,121 @@ async function onTableChanged(eventArgs: Excel.TableChangedEventArgs) { //This f
 
 
 
+function gee(projectTypeTableRows, i) {
+  var projectTypeValues = projectTypeTableRows.items[i].values;
+    //console.log(projectTypeValues);
+      if (i == 0) {
+        brandNewBuild = projectTypeValues[0][1];
+      } else if (i == 1) {
+        newBuildOtherNatives = projectTypeValues[0][1];
+      } else if (i == 2) {
+        newBuildFromTemplate = projectTypeValues[0][1];
+      } else if (i == 3) {
+        changesToExistingNatives = projectTypeValues[0][1];
+      } else if (i == 4) {
+        specCheck = projectTypeValues[0][1];
+      } else if (i == 5) {
+        weTransferUpload = projectTypeValues[0][1];
+      } else if (i == 6) {
+        specialRequest = projectTypeValues[0][1];
+      } else if (i == 7) {
+        otherProjectType = projectTypeValues[0][1];
+      };
+};
+  //console.log("The updated projectType values are: " + brandNewBuild + ", " + newBuildOtherNatives + ", " + newBuildFromTemplate + ", " + changesToExistingNatives + ", " + specCheck + ", " + weTransferUpload + ", " + specialRequest + ", " + otherProjectType)
+      
+function pee(productTableRows, i) {     
+  var productValues = productTableRows.items[i].values;
+    if (i == 0) {
+      menu = productValues[0][1];
+    } else if (i == 1) {
+      menuXL = productValues[0][1];
+    } else if (i == 2) {
+      smallMenu = productValues[0][1];
+    } else if (i == 3) {
+      brochure = productValues[0][1];
+    } else if (i == 4) {
+      brochureXL = productValues[0][1];
+    } else if (i == 5) {
+      smallBrochure = productValues[0][1];
+    } else if (i == 6) {
+      postcard = productValues[0][1];
+    } else if (i == 7) {
+      jumboPostcard = productValues[0][1];
+    } else if (i == 8) {
+      colossalPostcard = productValues[0][1];
+    } else if (i == 9) {
+      scratchoffPostcard = productValues[0][1];
+    } else if (i == 10) {
+      jumboScratchoffPostcard = productValues[0][1];
+    } else if (i == 11) {
+      peelBoxPostcard = productValues[0][1];
+    } else if (i == 12) {
+      magnet = productValues[0][1];
+    } else if (i == 13) {
+      foldedMagnet = productValues[0][1];
+    } else if (i == 14) {
+      twoSBT = productValues[0][1];
+    } else if (i == 15) {
+      boxTopper = productValues[0][1];
+    } else if (i == 16) {
+      flyer = productValues[0][1];
+    } else if (i == 17) {
+      doorHanger = productValues[0][1];
+    } else if (i == 18) {
+      smallPlastic = productValues[0][1];
+    } else if (i == 19) {
+      mediumPlastic = productValues[0][1];
+    } else if (i == 20) {
+      largePlastic = productValues[0][1];
+    } else if (i == 21) {
+      couponBooklet = productValues[0][1];
+    } else if (i == 22) {
+      envelopeMailer = productValues[0][1];
+    } else if (i == 23) {
+      birthdayPostcard = productValues[0][1];
+    } else if (i == 24) {
+      newMover = productValues[0][1];
+    } else if (i == 25) {
+      plasticNewMover = productValues[0][1];
+    } else if (i == 26) {
+      birthdayPlastic = productValues[0][1];
+    } else if (i == 27) {
+      wideFormat = productValues[0][1];
+    } else if (i == 28) {
+      windowClings = productValues[0][1];
+    } else if (i == 29) {
+      businessCards = productValues[0][1];
+    } else if (i == 30) {
+      artworkOnly = productValues[0][1];
+    } else if (i == 31) {
+      logoCreation = productValues[0][1];
+    } else if (i == 32) {
+      logoRecreation = productValues[0][1];
+    } else if (i == 33) {
+      legalLetter = productValues[0][1];
+    } else if (i == 34) {
+      letter = productValues[0][1];
+    } else if (i == 35) {
+      mapCreation = productValues[0][1];
+    } else if (i == 36) {
+      menuXXL = productValues[0][1];
+    } else if (i == 37) {
+      biFoldMenu = productValues[0][1];
+    } else if (i == 38) {
+      mediaKit = productValues[0][1];
+    } else if (i == 39) {
+      popBanner = productValues[0][1];
+    } else if (i == 40) {
+      otherProduct = productValues[0][1];
+    };
+};
+//console.log("The updated data for 2SBT is: " + twoSBT);
+//console.log("The updated date for Other is: " + otherProduct);
+
+
+
+
 //#region AUTOFILL FUNCTIONS -------------------------------------------------------------------------------------
 
 
@@ -942,7 +1033,7 @@ async function onTableChanged(eventArgs: Excel.TableChangedEventArgs) { //This f
    * Finds the value of Project Type in the changed row and returns a number of hours depending on the project type
    * @param {Array} rowValues loads the values of the changed row
    * @param {Number} changedRow loads the row number of the changed row
-   * @returns A Number
+   * @returns Number
    */   
   function lookupStart(rowValues, changedRow) { //loads these variables from another function to use in this function
     var address = "H" + (changedRow + 2); //takes the row that was updated and locates the address from the Project Type column.
@@ -950,6 +1041,29 @@ async function onTableChanged(eventArgs: Excel.TableChangedEventArgs) { //This f
     var input = rowValues[0][7]; //assigns input the cell value in the changed row and the Project Type column (a nested array of values)
     // console.log(input);
 
+    var output;
+
+    if (input == "Brand New Build") {
+      output = brandNewBuild;
+    } else if (input == "Brand New Build from Other Product Natives") {
+      output = newBuildOtherNatives;
+    } else if (input == "Brand New Build From Template") {
+      output = newBuildFromTemplate;
+    } else if (input == "Changes to Exisiting Natives") {
+      output = changesToExistingNatives;
+    } else if (input == "Specification Check") {
+      output = specCheck;
+    } else if (input == "WeTransfer Upload to MS") {
+      output = weTransferUpload;
+    } else if (input == "Special Request") {
+      output = specialRequest;
+    } else {
+      output = otherProjectType;
+    };
+
+    return output;
+
+    /*
     var a = ["Brand New Build", "Special Request"];
     var b = ["Brand New Build from Other Product Natives", "Brand New Build From Template", "Changes to Exisiting Natives", "Specification Check", "WeTransfer Upload to MS"];
     var output;
@@ -962,7 +1076,9 @@ async function onTableChanged(eventArgs: Excel.TableChangedEventArgs) { //This f
       output = 24; //adds 24 hours
     }
     return output;
+    */
   };
+  
   //#endregion ---------------------------------------------------------------------------------------------------
 
 
@@ -981,9 +1097,8 @@ async function onTableChanged(eventArgs: Excel.TableChangedEventArgs) { //This f
       var address = "J" + (changedRow + 2); //takes the row that was updated and locates the address from the Added column.
       var dateTime = rowValues[0][9]; //assigns input the cell value in the changed row and the Added column (a nested array of values)
 
-      //the below code basically is just converting the serial number in dateTime to a date object, and then adjusting to read in EST.
       var date = new Date(Math.round((dateTime - 25569)*86400*1000)); //convert serial number to date object
-      date.setHours(date.getHours() + 4); //adjusting from GMT to EST (adds 4 hours)
+      date.setMinutes(date.getMinutes() + date.getTimezoneOffset()); //adjusting from GMT to EST (adds 4 hours)
       return date;
     };
     //#endregion ---------------------------------------------------------------------------------------------------
@@ -1012,13 +1127,20 @@ async function onTableChanged(eventArgs: Excel.TableChangedEventArgs) { //This f
      * Prints the value of override to the Picked Up / Started By column and formats the date in a readible format
      * @param {Number} changedRow loads the row number of the changed row
      * @param {Object} sheet the active worksheet
-     * @param {Date} weekendHoursAdjust date adjusted to not land on a weekend
+     * @param {Date} override date adjusted for office hours
      * @returns date
      */
     function startedBy(changedRow, sheet, override) { //loads these variables from another function to use in this function
       var address = "M" + (changedRow + 2); //takes the row that was updated and locates the address from the Picked Up / Started By column.
       var range = sheet.getRange(address); //assigns the cell from the address variable to range
+     
 
+      //the region below sets a custom cell format for the date so that it is more easily readible. It is not currently being used 
+      //because we decided later to apply some conditional formatting to the date cells, but excel didn't recognize our custom format as a date;
+      //instead I decided to convert the date object back into a serial number and then format the column in Excel to achieve the desired output
+
+      //#region FORMATTING DATE INTO READIBLE STRING ---------------------------------------------------------------
+      /*
       var formatDate = override.toLocaleDateString("en-us", { //formats the date to display correctly
           weekday:'short',
           month:'numeric',
@@ -1036,6 +1158,14 @@ async function onTableChanged(eventArgs: Excel.TableChangedEventArgs) { //This f
       range.values = [[squeekday]]; //assigns the returned date value to the cell
 
       return range.values; //commits changes and exits the function
+      */
+     //#endregion ------------------------------------------------------------------------------------------------
+     
+      var serialDate = JSDateToExcelDate(override);  //converts override date object back into a serial number
+
+      range.values = [[serialDate]]; //assigns the returned serial number to the cell
+      return range.values; //commits changes and exits the function
+
     };
     //#endregion ----------------------------------------------------------------------------------------------------
 
@@ -1056,48 +1186,145 @@ async function onTableChanged(eventArgs: Excel.TableChangedEventArgs) { //This f
     function preLookupWork(rowValues, projectTypeHours) {
       var input = rowValues[0][6]; //assigns input the cell value in the changed row and the Product column (a nested array of values)
       // console.log(input);
-      var a = ["Menu", "Brochure", "Coupon Booklet", "Jumbo Postcard"];
-      var b = ["MenuXL", "BrochureXL", "Folded Magnet", "Colossal Postcard", "Large Plastic"];
-      var c = ["Small Menu", "Small Brochure", "Flyer", "Letter", "Legal Letter", "Envelope Mailer", "Postcard", "Magnet", "Door Hanger", "New Mover", "Birthday", "Logo Creation"];
-      var d = ["2SBT", "Box Topper", "Logo Recreation", "Business Cards", "Map Creation"];
-      var e = ["Scratch-Off Postcard", "Peel-A-Box Postcard", "Small Plastic", "Plastic New Mover", "Birthday Plastic", "Wide Format", "Artwork Only", "Window Clings"];
-      var f = ["Medium Plastic", "Jumbo Scratch-Off Postcard"];
       var output;
 
-      if (a.includes(input)) { //if value in column G includes any input from var a...
-        output = 10; //adds 10 hours
-      } else if (b.includes(input)) { //if value in column G includes any input from var b...
-        output = 18; //adds 18 hours
-      } else if (c.includes(input)) { //if value in column G includes any input from var c...
-        output = 4; //adds 4 hours
-      } else if (d.includes(input)) { //if value in column G includes any input from var d...
-        output = 2; //adds 2 hours
-      } else if (e.includes(input)) { //if value in column G includes any input from var e...
-        output = 7; //adds 7 hours
-      } else if (f.includes(input)) { //if value in column G includes any input from var f...
-        output = 15; //adds 15 hours
-      } else { //everything else...
-        output = 96; //adds 96 hours
-      } //console.log(output);
+      if (input == "Menu") {
+        output = menu;
+      } else if (input == "MenuXL") {
+        output = menuXL;
+      } else if (input == "Small Menu") {
+        output = smallMenu;
+      } else if (input == "Brochure") {
+        output = brochure;
+      } else if (input == "BrochureXL") {
+        output = brochureXL;
+      } else if (input == "Small Brochure") {
+        output = smallBrochure;
+      } else if (input == "Postcard") {
+        output = postcard;
+      } else if (input == "Jumbo Postcard") {
+        output = jumboPostcard;
+      } else if (input == "Colossal Postcard") {
+        output = colossalPostcard;
+      } else if (input == "Scratch-Off Postcard") {
+        output = scratchoffPostcard;
+      } else if (input == "Jumbo Scratch-Off Postcard") {
+        output = jumboScratchoffPostcard;
+      } else if (input == "Peel-A-Box Postcard") {
+        output = peelBoxPostcard;
+      } else if (input == "Magnet") {
+        output = magnet;
+      } else if (input == "Folded Magnet") {
+        output = foldedMagnet;
+      } else if (input == "2SBT") {
+        output = twoSBT;
+      } else if (input == "Box Topper") {
+        output = boxTopper;
+      } else if (input == "Flyer") {
+        output = flyer;
+      } else if (input == "Door Hanger") {
+        output = doorHanger;
+      } else if (input == "Small Plastic") {
+        output = smallPlastic;
+      } else if (input == "Medium Plastic") {
+        output = mediumPlastic;
+      } else if (input == "Large Plastic") {
+        output = largePlastic;
+      } else if (input == "Coupon Booklet") {
+        output = couponBooklet;
+      } else if (input == "Envelope Mailer") {
+        output = envelopeMailer;
+      } else if (input == "Birthday Postcard") {
+        output = birthdayPostcard;
+      } else if (input == "New Mover") {
+        output = newMover;
+      } else if (input == "Plastic New Mover") {
+        output = plasticNewMover;
+      } else if (input == "Birthday Plastic") {
+        output = birthdayPlastic;
+      } else if (input == "Wide Format") {
+        output = wideFormat;
+      } else if (input == "Window Clings") {
+        output = windowClings;
+      } else if (input == "Business Cards") {
+        output = businessCards;
+      } else if (input == "Artwork Only") {
+        output = artworkOnly;
+      } else if (input == "Logo Creation") {
+        output = logoCreation;
+      } else if (input == "Logo Recreation") {
+        output = logoRecreation;
+      } else if (input == "Legal Letter") {
+        output = legalLetter;
+      } else if (input == "Letter") {
+        output = letter;
+      } else if (input == "Map Creation") {
+        output = mapCreation;
+      } else if (input == "MenuXXL") {
+        output = menuXXL;
+      } else if (input == "Bi-Fold Menu") {
+        output = biFoldMenu;
+      } else if (input == "Media Kit") {
+        output = mediaKit;
+      } else if (input == "POP Banner") {
+        output = popBanner;
+      } else {
+        output = otherProduct;
+      };
+
       var newOutput = output + projectTypeHours; //adds hours from lookupStart to output and assigns new output to global variable
       // console.log(newOutput);
       return newOutput;
     };
+
+    /*
+    var a = ["Menu", "Brochure", "Coupon Booklet", "Jumbo Postcard"];
+    var b = ["MenuXL", "BrochureXL", "Folded Magnet", "Colossal Postcard", "Large Plastic"];
+    var c = ["Small Menu", "Small Brochure", "Flyer", "Letter", "Legal Letter", "Envelope Mailer", "Postcard", "Magnet", "Door Hanger", "New Mover", "Birthday", "Logo Creation"];
+    var d = ["2SBT", "Box Topper", "Logo Recreation", "Business Cards", "Map Creation"];
+    var e = ["Scratch-Off Postcard", "Peel-A-Box Postcard", "Small Plastic", "Plastic New Mover", "Birthday Plastic", "Wide Format", "Artwork Only", "Window Clings"];
+    var f = ["Medium Plastic", "Jumbo Scratch-Off Postcard"];
+    var output;
+
+    if (a.includes(input)) { //if value in column G includes any input from var a...
+      output = 10; //adds 10 hours
+    } else if (b.includes(input)) { //if value in column G includes any input from var b...
+      output = 18; //adds 18 hours
+    } else if (c.includes(input)) { //if value in column G includes any input from var c...
+      output = 4; //adds 4 hours
+    } else if (d.includes(input)) { //if value in column G includes any input from var d...
+      output = 2; //adds 2 hours
+    } else if (e.includes(input)) { //if value in column G includes any input from var e...
+      output = 7; //adds 7 hours
+    } else if (f.includes(input)) { //if value in column G includes any input from var f...
+      output = 15; //adds 15 hours
+    } else { //everything else...
+      output = 96; //adds 96 hours
+    } //console.log(output);
+    var newOutput = output + projectTypeHours; //adds hours from lookupStart to output and assigns new output to global variable
+    // console.log(newOutput);
+    return newOutput;
+  };
+  */
     //#endregion --------------------------------------------------------------------------------------------------
 
     //#region WORK HOURS ADJUST ------------------------------------------------------------------------------------
     /**
-     * if lookupStart number is 2, divide the preLookupWork number by 3. Otherwise, returns preLookupWork number
-     * @param {Number} projectTypeHours lookupStart returned number
+     * if Project Type value is anything other than a new build (and friends), adjusts the Product Hours number to be a third of it's normal value, resulting in a shorter proof to client time
      * @param {Number} productHours preLookupWork returned number
-     * @returns A Number
+     * @param {Number} rowValues loads the values of the changed row
+     * @returns Number
      */
-    function lookupWork(projectTypeHours, productHours) {
-      if(projectTypeHours == 2) { //if lookupStart number was 2...
-        return (productHours / 3) //returns the productHours number divided by 3
-      }
-      return productHours; //otherwise returns the productHours number unaltered
-    }
+    function lookupWork(productHours, rowValues) {
+
+      var input = rowValues[0][7]; //assigns input the cell value in the changed row and the Project Type column (a nested array of values)
+
+      if(input == "Brand New Build" || input == "Special Request" || input == "Other") { //if input from Project Type column is any of these values...
+        return productHours; //returns the productHours number unaltered
+      };
+      var output = productHours / 3; //returns the productHours number divided by 3
+      return output;
+    };
     //#endregion ---------------------------------------------------------------------------------------------------
 
     //#region WORKOVERRIDE --------------------------------------------------------------------------------------------
@@ -1130,6 +1357,12 @@ async function onTableChanged(eventArgs: Excel.TableChangedEventArgs) { //This f
       var range = sheet.getRange(address); //assigns the cell from the address variable to range
       // console.log(range);
 
+      //the region below sets a custom cell format for the date so that it is more easily readible. It is not currently being used 
+      //because we decided later to apply some conditional formatting to the date cells, but excel didn't recognize our custom format as a date;
+      //instead I decided to convert the date object back into a serial number and then format the column in Excel to achieve the desired output
+
+      //#region FORMATTING DATE INTO READIBLE STRING ---------------------------------------------------------------
+      /*
       var formatDate = workOverride.toLocaleDateString("en-us", { //formats the date to display correctly
           weekday:'short',
           month:'numeric',
@@ -1147,6 +1380,14 @@ async function onTableChanged(eventArgs: Excel.TableChangedEventArgs) { //This f
       range.values = [[squeekday]]; //assigns the returned date value to the cell
 
       return range.values; //commits changes and exits the function
+      */
+     //#endregion -------------------------------------------------------------------------------------------------
+
+      var serialDateTheSecond = JSDateToExcelDate(workOverride); //converts workOverride date object back into a serial number
+
+      range.values = [[serialDateTheSecond]]; //assigns the returned serial number to the cell
+      return range.values; //commits changes and exits the function
+
     };
     //#endregion ----------------------------------------------------------------------------------------------------
 
@@ -1518,11 +1759,40 @@ async function onTableChanged(eventArgs: Excel.TableChangedEventArgs) { //This f
 
         //#endregion ------------------------------------------------------------------------------------------------------------------------------
 
+
+        //#region CONVERT DATE TO SERIAL ----------------------------------------------------------------------------------------------------------
+
+        /**
+         * Converts input date into serial number that excel can apply conditional formatting to
+         * @param {Date} inDate A date variable
+         * @returns String
+         */
+        function JSDateToExcelDate(inDate) {
+
+          var returnDateTime = 25569.0 + ((inDate.getTime() - (inDate.getTimezoneOffset() * 60 * 1000)) / (1000 * 60 * 60 * 24));
+          //var returnDateTime = 25569.0 + ((inDate.getTime()) / (1000 * 60 * 60 * 24));
+          return returnDateTime.toString().substr(0,20);
+      
+        };
+
+      //#endregion --------------------------------------------------------------------------------------------------------------------------------
+
       //#endregion -------------------------------------------------------------------------------------------------------------------------------
 
   //#endregion -------------------------------------------------------------------------------------------------------------------------------------
 
-
 //#endregion ---------------------------------------------------------------------------------------------------------------------------------------
 
 
+function megaDooDoo(sheet, changedRow) {
+
+  var address = "J" + (changedRow + 2); //takes the row that was updated and locates the address from the Added column.
+  var range = sheet.getRange(address);
+
+  var now = new Date();
+  var toSerial = JSDateToExcelDate(now);
+
+  range.values = [[toSerial]];
+  return range.values;
+
+};
